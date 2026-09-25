@@ -3,13 +3,16 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'data.dart';
 import 'state.dart';
 
 enum VoiceKind { kannada, hindi, english, none }
 
-/// Text-to-speech with fallbacks, plus small synthesized sound effects.
+/// Kannada speech from recordings bundled in assets/audio/, falling back to
+/// the phone's text-to-speech; plus small synthesized sound effects.
 class Audio {
   Audio._();
   static final Audio instance = Audio._();
@@ -27,7 +30,25 @@ class Audio {
   void init(AppState s) {
     state = s;
     _makeSounds();
+    unawaited(_loadRecordings());
     unawaited(_setUpVoice());
+  }
+
+  /// audioKey()s that have a bundled recording.
+  final Set<String> _recorded = {};
+  AudioPlayer? _voicePlayer;
+
+  bool hasRecording(String kannada) => _recorded.contains(audioKey(kannada));
+
+  Future<void> _loadRecordings() async {
+    try {
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      for (final a in manifest.listAssets()) {
+        if (a.startsWith('assets/audio/') && a.endsWith('.ogg')) {
+          _recorded.add(a.substring(13, a.length - 4));
+        }
+      }
+    } catch (_) {}
   }
 
   static const _ttsTimeout = Duration(seconds: 8);
@@ -105,7 +126,20 @@ class Audio {
 
   Future<void> speak(String kannada, String roman) async {
     final s = state;
-    if (s == null || !s.voice || kind == VoiceKind.none) return;
+    if (s == null || !s.voice) return;
+    final key = audioKey(kannada);
+    if (_recorded.contains(key)) {
+      try {
+        final p = _voicePlayer ??= AudioPlayer()
+          ..setReleaseMode(ReleaseMode.stop);
+        await p.stop();
+        // Speed slider (0.2–0.7, default 0.4) maps to 0.7×–1.2× playback.
+        await p.setPlaybackRate(.5 + s.rate);
+        await p.play(AssetSource('audio/$key.ogg'));
+      } catch (_) {}
+      return;
+    }
+    if (kind == VoiceKind.none) return;
     final text = switch (kind) {
       VoiceKind.kannada => kannada,
       VoiceKind.hindi => toDevanagari(kannada),
@@ -121,6 +155,7 @@ class Audio {
   /// Fire-and-forget: nothing waits on stopping speech.
   void stop() {
     if (state == null) return;
+    _voicePlayer?.stop().then((_) {}, onError: (_) {});
     _tts.stop().then((_) {}, onError: (_) {});
   }
 

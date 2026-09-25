@@ -371,3 +371,32 @@ List<Letter> byGroup(Group g) => letters.where((l) => l.group == g).toList();
 
 /// Consonant root without the inherent "a" (ka → k).
 String rootOf(Letter l) => l.tr.substring(0, l.tr.length - 1);
+
+/// Praise the result screen says aloud.
+const spokenPraise = [('ಶಭಾಷ್', 'shabash'), ('ಚೆನ್ನಾಗಿದೆ', 'chennagide')];
+
+/// Everything the app says aloud, as (Kannada, romanized) pairs. Each has a
+/// recording in assets/audio/ named by [audioKey]; see tool/generate_audio.dart.
+List<(String, String)> spokenTexts() {
+  final out = <String, String>{};
+  for (final l in letters) {
+    out[l.ch] = l.tr;
+    out[l.word] = l.wordTr;
+  }
+  for (final n in numbers) {
+    out[n.word] = n.wordTr;
+  }
+  for (final l in byGroup(Group.vyanjana)) {
+    for (final s in signs) {
+      out.putIfAbsent(l.ch + s.sign, () => rootOf(l) + s.tr);
+    }
+  }
+  for (final (kn, tr) in spokenPraise) {
+    out[kn] = tr;
+  }
+  return [for (final e in out.entries) (e.key, e.value)];
+}
+
+/// ASCII file name for a Kannada text: its code points in hex (ಕಾ → c95_cbe).
+String audioKey(String text) =>
+    text.runes.map((c) => c.toRadixString(16)).join('_');

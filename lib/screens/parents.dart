@@ -72,11 +72,9 @@ class ParentsScreen extends StatefulWidget {
 class _ParentsScreenState extends State<ParentsScreen> {
   bool _armed = false;
 
-  String get _voiceText => switch (Audio.instance.kind) {
-    VoiceKind.kannada => '✅ Kannada voice is installed.',
-    VoiceKind.hindi => '⚠️ No Kannada voice on this phone, so the Hindi voice reads the letters (close, but not perfect). For the best sound, install Kannada: Settings → Accessibility → Text-to-speech → Speech Services by Google → Install voice data → Kannada, then reopen the app.',
-    _ => '⚠️ No Kannada voice on this phone. Install it: Settings → Accessibility → Text-to-speech → Speech Services by Google → Install voice data → Kannada, then reopen the app.',
-  };
+  String get _voiceText =>
+      '✅ Every letter, word, number and kagunita sound is built into the app, so it works offline on any phone. '
+      '${Audio.instance.kind == VoiceKind.kannada ? "The phone's Kannada voice is used only for anything without a recording." : "Tip: installing the Kannada text-to-speech voice (Settings → Accessibility → Text-to-speech) is optional."}';
 
   @override
   Widget build(BuildContext context) {
@@ -132,9 +130,9 @@ class _ParentsScreenState extends State<ParentsScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: PillButton(
-                  '🔊 Test: ಅ ಆ ಇ',
+                  '🔊 Test: ಆನೆ',
                   small: true,
-                  onTap: () => Audio.instance.speak('ಅ ಆ ಇ', 'a aa i'),
+                  onTap: () => Audio.instance.speak('ಆನೆ', 'aane'),
                 ),
               ),
             ],

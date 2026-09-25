@@ -13,11 +13,11 @@ A Flutter app that teaches young children (ages 3–8) the Kannada varnamala. It
 | Tracing | Finger tracing on copybook lines, checked for coverage and for staying inside the letter |
 | Games | Listen & find, first letter, memory pairs, balloon pop, what comes next, kagunita builder, counting |
 | Rewards | Stars, 20 stickers, progress bar |
-| Voice | Phone text-to-speech in Kannada, with a Hindi-voice fallback when Kannada isn't installed |
+| Voice | 586 Kannada recordings built into the app (every letter, picture word, number and kagunita form), so sound works offline on any phone. The phone's text-to-speech is only a fallback |
 | Parents | Settings behind a sum: sound, speed, English hints, reset |
 | Ads | AdMob banner on menu screens, a full-screen ad after every 3rd finished game. None while learning, tracing or playing |
 
-Code layout: `lib/ads.dart` (AdMob), `lib/data.dart` (content), `lib/state.dart` (saved progress), `lib/audio.dart` (speech and sound effects), `lib/widgets.dart` (toy-style UI parts), `lib/screens/` (one file per area).
+Code layout: `lib/ads.dart` (AdMob), `lib/audio.dart` (built-in recordings, speech fallback, sound effects), `lib/data.dart` (content), `lib/state.dart` (saved progress), `lib/widgets.dart` (toy-style UI parts), `lib/screens/` (one file per area).
 
 ## Run it
 
@@ -97,6 +97,14 @@ After the app is live, add an `app-ads.txt` file to your developer website, as A
 5. Upload the `.aab` to Internal testing first, try it on a phone, then promote it to Production.
 
 For every update, raise the number after `+` in `pubspec.yaml` (`version: 1.0.1+2`).
+
+## Built-in sounds
+
+`assets/audio/` holds one small `.ogg` file for everything the app says. The file name is the text's Unicode code points (ಕಾ → `c95_cbe.ogg`), and `assets/audio/recording-list.csv` lists every file with its Kannada text.
+
+The current files were made with the open-source espeak-ng Kannada voice by `dart run tool/generate_audio.dart` (needs `espeak-ng` and `ffmpeg`). The pronunciation is correct but the voice sounds robotic.
+
+**For a friendlier human voice:** have a clear Kannada speaker record the lines in `recording-list.csv`. Save each as `.ogg` with the exact file name from the list and copy it over the old one. Any file you don't replace keeps the generated voice. The generator only writes files that are missing, unless you pass `--all`. To convert a phone recording: `ffmpeg -i ka.m4a -ac 1 -ar 22050 -c:a libvorbis -q:a 4 c95.ogg`.
 
 ## Content fixes
 

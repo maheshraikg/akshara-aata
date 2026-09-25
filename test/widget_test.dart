@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:akshara_aata/audio.dart';
 import 'package:akshara_aata/data.dart';
 import 'package:akshara_aata/main.dart';
@@ -44,6 +46,20 @@ void main() {
       expect(rootOf(ka) + signs[2].tr, 'ki');
       expect(signs.length, 15);
     });
+  });
+
+  test('every spoken text has a bundled recording', () {
+    for (final (kn, _) in spokenTexts()) {
+      final f = File('assets/audio/${audioKey(kn)}.ogg');
+      expect(f.existsSync(), isTrue, reason: '$kn has no recording');
+    }
+    // Every text the app says aloud is in the list.
+    final texts = spokenTexts().map((e) => e.$1).toSet();
+    for (final l in letters) {
+      expect(texts, containsAll([l.ch, l.word]));
+    }
+    expect(texts, containsAll(numbers.map((n) => n.word)));
+    expect(texts, contains('ಕೌ'));
   });
 
   test('Kannada maps onto Devanagari for the Hindi voice fallback', () {
