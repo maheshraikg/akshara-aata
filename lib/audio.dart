@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -19,24 +20,38 @@ class Audio {
   final Map<String, AudioPlayer> _players = {};
   final Map<String, Uint8List> _sounds = {};
 
-  Future<void> init(AppState s) async {
+  /// Prepares sound effects right away and the voice in the background.
+  /// Never awaits the text-to-speech engine: flutter_tts holds every call
+  /// until the phone's engine reports ready, and on phones where it is slow,
+  /// missing or broken that never happens.
+  void init(AppState s) {
     state = s;
+    _makeSounds();
+    unawaited(_setUpVoice());
+  }
+
+  static const _ttsTimeout = Duration(seconds: 8);
+
+  Future<void> _setUpVoice() async {
     try {
-      await _tts.awaitSpeakCompletion(false);
+      await _tts.awaitSpeakCompletion(false).timeout(_ttsTimeout);
       if (await _available('kn-IN')) {
+        await _tts.setLanguage('kn-IN').timeout(_ttsTimeout);
         kind = VoiceKind.kannada;
-        await _tts.setLanguage('kn-IN');
       } else if (await _available('hi-IN')) {
+        await _tts.setLanguage('hi-IN').timeout(_ttsTimeout);
         kind = VoiceKind.hindi;
-        await _tts.setLanguage('hi-IN');
       } else if (await _available('en-IN')) {
+        await _tts.setLanguage('en-IN').timeout(_ttsTimeout);
         kind = VoiceKind.english;
-        await _tts.setLanguage('en-IN');
       }
-      await _tts.setPitch(1.1);
+      await _tts.setPitch(1.1).timeout(_ttsTimeout);
     } catch (_) {
-      kind = VoiceKind.none;
+      // Timed out or no engine: the app works silently.
     }
+  }
+
+  void _makeSounds() {
     _sounds['tap'] = _wav([(660, 0, .08)], wave: _triangle, vol: .15);
     _sounds['right'] = _wav([
       (523, 0, .14),
@@ -59,7 +74,7 @@ class Audio {
 
   Future<bool> _available(String lang) async {
     try {
-      final r = await _tts.isLanguageAvailable(lang);
+      final r = await _tts.isLanguageAvailable(lang).timeout(_ttsTimeout);
       return r == true || r == 1;
     } catch (_) {
       return false;
@@ -97,16 +112,16 @@ class Audio {
       _ => roman,
     };
     try {
-      await _tts.stop();
-      await _tts.setSpeechRate(s.rate);
-      await _tts.speak(text);
+      await _tts.stop().timeout(_ttsTimeout);
+      await _tts.setSpeechRate(s.rate).timeout(_ttsTimeout);
+      await _tts.speak(text).timeout(_ttsTimeout);
     } catch (_) {}
   }
 
-  Future<void> stop() async {
-    try {
-      await _tts.stop();
-    } catch (_) {}
+  /// Fire-and-forget: nothing waits on stopping speech.
+  void stop() {
+    if (state == null) return;
+    _tts.stop().then((_) {}, onError: (_) {});
   }
 
   void tap() => _play('tap');
@@ -126,10 +141,7 @@ class Audio {
         return ap;
       });
       await p.stop();
-      await p.play(
-        BytesSource(bytes, mimeType: 'audio/wav'),
-        mode: PlayerMode.lowLatency,
-      );
+      await p.play(BytesSource(bytes, mimeType: 'audio/wav'));
     } catch (_) {}
   }
 

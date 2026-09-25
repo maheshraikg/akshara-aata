@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,14 +12,18 @@ import 'widgets.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // Only local storage is awaited before the first frame; voice and ads set
+  // themselves up in the background so a slow phone service can't keep the
+  // app on a blank screen.
+  unawaited(
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]),
+  );
   final state = AppState(await SharedPreferences.getInstance());
-  await Audio.instance.init(state);
-  // Not awaited: the app opens without waiting for the ad network.
-  Ads.init();
+  Audio.instance.init(state);
+  unawaited(Ads.init());
   runApp(AksharaAata(state: state));
 }
 
