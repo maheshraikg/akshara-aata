@@ -1,0 +1,40 @@
+name: akshara_aata
+description: "Akshara Aata: Kannada varnamala learning games for kids."
+publish_to: 'none'
+
+# versionName+versionCode. Bump the number after + for every Play Store upload.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  audioplayers: ^6.8.1
+  flutter_tts: ^4.2.5
+  shared_preferences: ^2.5.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: BalooTamma2
+      fonts:
+        - asset: assets/fonts/BalooTamma2-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/BalooTamma2-ExtraBold.ttf
+          weight: 800
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/icon/icon-512.png
+  adaptive_icon_background: "#C8323C"
+  adaptive_icon_foreground: assets/icon/icon-512-maskable.png
+  min_sdk_android: 21

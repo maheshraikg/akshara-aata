@@ -1,0 +1,373 @@
+/// Kannada varnamala content: 49 letters (13 swaras + 2 yogavahas + 34 vyanjanas),
+/// numerals and kagunita vowel signs.
+library;
+
+enum Group { swara, yogavaha, vyanjana }
+
+class Letter {
+  const Letter(
+    this.ch,
+    this.tr,
+    this.group,
+    this.varga,
+    this.word,
+    this.wordTr,
+    this.emoji,
+    this.en, {
+    this.start = true,
+  });
+
+  final String ch;
+  final String tr;
+  final Group group;
+  final String varga;
+  final String word;
+  final String wordTr;
+  final String emoji;
+  final String en;
+
+  /// False when the letter is not the first sound of [word]; the
+  /// "which letter does it start with?" game skips those.
+  final bool start;
+}
+
+class KNumber {
+  const KNumber(this.ch, this.n, this.word, this.wordTr);
+  final String ch;
+  final int n;
+  final String word;
+  final String wordTr;
+}
+
+class VowelSign {
+  const VowelSign(this.sign, this.vowel, this.tr);
+  final String sign;
+  final String vowel;
+  final String tr;
+}
+
+class Varga {
+  const Varga(this.id, this.name, this.en);
+  final String id;
+  final String name;
+  final String en;
+}
+
+/// Anything that can be shown on a learning card or traced.
+class CardItem {
+  const CardItem({
+    required this.ch,
+    required this.say,
+    required this.sayRoman,
+    required this.word,
+    required this.wordTr,
+    required this.label,
+    this.emoji,
+    this.en,
+    this.count,
+    this.color = CardColor.red,
+  });
+
+  final String ch;
+  final String say;
+  final String sayRoman;
+  final String word;
+  final String wordTr;
+  final String label;
+  final String? emoji;
+  final String? en;
+  final int? count;
+  final CardColor color;
+
+  factory CardItem.letter(Letter l) => CardItem(
+    ch: l.ch,
+    say: l.ch,
+    sayRoman: l.tr,
+    word: l.word,
+    wordTr: l.wordTr,
+    emoji: l.emoji,
+    en: l.en,
+    label: switch (l.group) {
+      Group.swara => 'ಸ್ವರ · vowel',
+      Group.yogavaha => 'ಯೋಗವಾಹ',
+      Group.vyanjana => 'ವ್ಯಂಜನ · consonant',
+    },
+    color: switch (l.group) {
+      Group.swara => CardColor.red,
+      Group.yogavaha => CardColor.plum,
+      Group.vyanjana => CardColor.blue,
+    },
+  );
+
+  factory CardItem.number(KNumber n) => CardItem(
+    ch: n.ch,
+    say: n.word,
+    sayRoman: n.wordTr,
+    word: n.word,
+    wordTr: n.wordTr,
+    count: n.n,
+    label: 'Number ${n.n}',
+    color: CardColor.green,
+  );
+}
+
+enum CardColor { red, blue, plum, green }
+
+const letters = <Letter>[
+  // ಸ್ವರಗಳು — vowels
+  Letter('ಅ', 'a', Group.swara, '', 'ಅನಾನಸ್', 'anaanas', '🍍', 'Pineapple'),
+  Letter('ಆ', 'aa', Group.swara, '', 'ಆನೆ', 'aane', '🐘', 'Elephant'),
+  Letter('ಇ', 'i', Group.swara, '', 'ಇಲಿ', 'ili', '🐭', 'Mouse'),
+  Letter('ಈ', 'ii', Group.swara, '', 'ಈರುಳ್ಳಿ', 'iiruLLi', '🧅', 'Onion'),
+  Letter('ಉ', 'u', Group.swara, '', 'ಉಂಗುರ', 'ungura', '💍', 'Ring'),
+  Letter('ಊ', 'uu', Group.swara, '', 'ಊಟ', 'uuTa', '🍛', 'Meal'),
+  Letter('ಋ', 'ru', Group.swara, '', 'ಋಷಿ', 'rushi', '🧘', 'Sage'),
+  Letter('ಎ', 'e', Group.swara, '', 'ಎಲೆ', 'ele', '🍃', 'Leaf'),
+  Letter('ಏ', 'ee', Group.swara, '', 'ಏಣಿ', 'eeNi', '🪜', 'Ladder'),
+  Letter('ಐ', 'ai', Group.swara, '', 'ಐದು', 'aidu', '🖐️', 'Five'),
+  Letter('ಒ', 'o', Group.swara, '', 'ಒಂಟೆ', 'onTe', '🐫', 'Camel'),
+  Letter('ಓ', 'oo', Group.swara, '', 'ಓದು', 'oodu', '📖', 'Read'),
+  Letter('ಔ', 'au', Group.swara, '', 'ಔಷಧಿ', 'aushadhi', '💊', 'Medicine'),
+  // ಯೋಗವಾಹಗಳು
+  Letter('ಅಂ', 'am', Group.yogavaha, '', 'ಅಂಗಡಿ', 'angaDi', '🏪', 'Shop'),
+  Letter(
+    'ಅಃ',
+    'ah',
+    Group.yogavaha,
+    '',
+    'ದುಃಖ',
+    'duhkha',
+    '😢',
+    'Sadness',
+    start: false,
+  ),
+  // ವರ್ಗೀಯ ವ್ಯಂಜನಗಳು
+  Letter('ಕ', 'ka', Group.vyanjana, 'ka', 'ಕಮಲ', 'kamala', '🪷', 'Lotus'),
+  Letter('ಖ', 'kha', Group.vyanjana, 'ka', 'ಖಡ್ಗ', 'khaDga', '🗡️', 'Sword'),
+  Letter('ಗ', 'ga', Group.vyanjana, 'ka', 'ಗಡಿಯಾರ', 'gaDiyaara', '⏰', 'Clock'),
+  Letter('ಘ', 'gha', Group.vyanjana, 'ka', 'ಘಂಟೆ', 'ghanTe', '🔔', 'Bell'),
+  Letter(
+    'ಙ',
+    'nga',
+    Group.vyanjana,
+    'ka',
+    'ವಾಙ್ಮಯ',
+    'vaangmaya',
+    '📜',
+    'Literature',
+    start: false,
+  ),
+  Letter('ಚ', 'cha', Group.vyanjana, 'cha', 'ಚಮಚ', 'chamacha', '🥄', 'Spoon'),
+  Letter(
+    'ಛ',
+    'chha',
+    Group.vyanjana,
+    'cha',
+    'ಛತ್ರಿ',
+    'chhatri',
+    '☂️',
+    'Umbrella',
+  ),
+  Letter('ಜ', 'ja', Group.vyanjana, 'cha', 'ಜಿಂಕೆ', 'jinke', '🦌', 'Deer'),
+  Letter('ಝ', 'jha', Group.vyanjana, 'cha', 'ಝರಿ', 'jhari', '🏞️', 'Stream'),
+  Letter(
+    'ಞ',
+    'nya',
+    Group.vyanjana,
+    'cha',
+    'ಜ್ಞಾನ',
+    'jnaana',
+    '🧠',
+    'Knowledge',
+    start: false,
+  ),
+  Letter('ಟ', 'Ta', Group.vyanjana, 'Ta', 'ಟಗರು', 'Tagaru', '🐏', 'Ram'),
+  Letter(
+    'ಠ',
+    'Tha',
+    Group.vyanjana,
+    'Ta',
+    'ಮಠ',
+    'maTha',
+    '🛕',
+    'Monastery',
+    start: false,
+  ),
+  Letter('ಡ', 'Da', Group.vyanjana, 'Ta', 'ಡಮರು', 'Damaru', '🥁', 'Hand drum'),
+  Letter('ಢ', 'Dha', Group.vyanjana, 'Ta', 'ಢಕ್ಕೆ', 'Dhakke', '🪘', 'Big drum'),
+  Letter(
+    'ಣ',
+    'Na',
+    Group.vyanjana,
+    'Ta',
+    'ಬಾಣ',
+    'baaNa',
+    '🏹',
+    'Arrow',
+    start: false,
+  ),
+  Letter(
+    'ತ',
+    'ta',
+    Group.vyanjana,
+    'ta',
+    'ತರಕಾರಿ',
+    'tarakaari',
+    '🥕',
+    'Vegetables',
+  ),
+  Letter(
+    'ಥ',
+    'tha',
+    Group.vyanjana,
+    'ta',
+    'ಕಥೆ',
+    'kathe',
+    '📚',
+    'Story',
+    start: false,
+  ),
+  Letter('ದ', 'da', Group.vyanjana, 'ta', 'ದನ', 'dana', '🐄', 'Cow'),
+  Letter('ಧ', 'dha', Group.vyanjana, 'ta', 'ಧ್ವಜ', 'dhvaja', '🚩', 'Flag'),
+  Letter('ನ', 'na', Group.vyanjana, 'ta', 'ನವಿಲು', 'navilu', '🦚', 'Peacock'),
+  Letter('ಪ', 'pa', Group.vyanjana, 'pa', 'ಪುಸ್ತಕ', 'pustaka', '📕', 'Book'),
+  Letter('ಫ', 'pha', Group.vyanjana, 'pa', 'ಫಲ', 'phala', '🍎', 'Fruit'),
+  Letter(
+    'ಬ',
+    'ba',
+    Group.vyanjana,
+    'pa',
+    'ಬಾತುಕೋಳಿ',
+    'baatukoLi',
+    '🦆',
+    'Duck',
+  ),
+  Letter('ಭ', 'bha', Group.vyanjana, 'pa', 'ಭೂಮಿ', 'bhuumi', '🌍', 'Earth'),
+  Letter('ಮ', 'ma', Group.vyanjana, 'pa', 'ಮರ', 'mara', '🌳', 'Tree'),
+  // ಅವರ್ಗೀಯ ವ್ಯಂಜನಗಳು
+  Letter(
+    'ಯ',
+    'ya',
+    Group.vyanjana,
+    'avargiya',
+    'ಯಂತ್ರ',
+    'yantra',
+    '⚙️',
+    'Machine',
+  ),
+  Letter('ರ', 'ra', Group.vyanjana, 'avargiya', 'ರೈಲು', 'railu', '🚂', 'Train'),
+  Letter('ಲ', 'la', Group.vyanjana, 'avargiya', 'ಲಾರಿ', 'laari', '🚚', 'Lorry'),
+  Letter(
+    'ವ',
+    'va',
+    Group.vyanjana,
+    'avargiya',
+    'ವಜ್ರ',
+    'vajra',
+    '💎',
+    'Diamond',
+  ),
+  Letter(
+    'ಶ',
+    'sha',
+    Group.vyanjana,
+    'avargiya',
+    'ಶಂಖ',
+    'shankha',
+    '🐚',
+    'Conch',
+  ),
+  Letter(
+    'ಷ',
+    'Sha',
+    Group.vyanjana,
+    'avargiya',
+    'ಕೃಷಿ',
+    'krushi',
+    '🌾',
+    'Farming',
+    start: false,
+  ),
+  Letter('ಸ', 'sa', Group.vyanjana, 'avargiya', 'ಸೂರ್ಯ', 'suurya', '☀️', 'Sun'),
+  Letter(
+    'ಹ',
+    'ha',
+    Group.vyanjana,
+    'avargiya',
+    'ಹೂವು',
+    'huuvu',
+    '🌸',
+    'Flower',
+  ),
+  Letter(
+    'ಳ',
+    'La',
+    Group.vyanjana,
+    'avargiya',
+    'ಬಾಳೆಹಣ್ಣು',
+    'baaLehaNNu',
+    '🍌',
+    'Banana',
+    start: false,
+  ),
+];
+
+const vargas = <Varga>[
+  Varga('ka', 'ಕ ವರ್ಗ', 'Ka group'),
+  Varga('cha', 'ಚ ವರ್ಗ', 'Cha group'),
+  Varga('Ta', 'ಟ ವರ್ಗ', 'Ta group'),
+  Varga('ta', 'ತ ವರ್ಗ', 'ta group'),
+  Varga('pa', 'ಪ ವರ್ಗ', 'Pa group'),
+  Varga('avargiya', 'ಅವರ್ಗೀಯ', 'Other consonants'),
+];
+
+const numbers = <KNumber>[
+  KNumber('೦', 0, 'ಸೊನ್ನೆ', 'sonne'),
+  KNumber('೧', 1, 'ಒಂದು', 'ondu'),
+  KNumber('೨', 2, 'ಎರಡು', 'eraDu'),
+  KNumber('೩', 3, 'ಮೂರು', 'mooru'),
+  KNumber('೪', 4, 'ನಾಲ್ಕು', 'naalku'),
+  KNumber('೫', 5, 'ಐದು', 'aidu'),
+  KNumber('೬', 6, 'ಆರು', 'aaru'),
+  KNumber('೭', 7, 'ಏಳು', 'eeLu'),
+  KNumber('೮', 8, 'ಎಂಟು', 'enTu'),
+  KNumber('೯', 9, 'ಒಂಬತ್ತು', 'ombattu'),
+  KNumber('೧೦', 10, 'ಹತ್ತು', 'hattu'),
+];
+
+const signs = <VowelSign>[
+  VowelSign('', 'ಅ', 'a'),
+  VowelSign('ಾ', 'ಆ', 'aa'),
+  VowelSign('ಿ', 'ಇ', 'i'),
+  VowelSign('ೀ', 'ಈ', 'ii'),
+  VowelSign('ು', 'ಉ', 'u'),
+  VowelSign('ೂ', 'ಊ', 'uu'),
+  VowelSign('ೃ', 'ಋ', 'ru'),
+  VowelSign('ೆ', 'ಎ', 'e'),
+  VowelSign('ೇ', 'ಏ', 'ee'),
+  VowelSign('ೈ', 'ಐ', 'ai'),
+  VowelSign('ೊ', 'ಒ', 'o'),
+  VowelSign('ೋ', 'ಓ', 'oo'),
+  VowelSign('ೌ', 'ಔ', 'au'),
+  VowelSign('ಂ', 'ಅಂ', 'am'),
+  VowelSign('ಃ', 'ಅಃ', 'ah'),
+];
+
+const praise = [
+  'ಶಭಾಷ್!',
+  'ಅದ್ಭುತ!',
+  'ತುಂಬಾ ಚೆನ್ನಾಗಿದೆ!',
+  'ಸೂಪರ್!',
+  'ಸರಿ ಉತ್ತರ!',
+];
+
+/// One sticker unlocks every 10 stars.
+const stickers = [
+  '🐘', '🦚', '🪁', '🥭', '🐯', '🌺', '🚂', '🦜', '🏏', '🌈', //
+  '🐢', '🦋', '🍦', '🚀', '👑', '🎺', '🐬', '🌻', '🦁', '🏆',
+];
+
+List<Letter> byGroup(Group g) => letters.where((l) => l.group == g).toList();
+
+/// Consonant root without the inherent "a" (ka → k).
+String rootOf(Letter l) => l.tr.substring(0, l.tr.length - 1);
