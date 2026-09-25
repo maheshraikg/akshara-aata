@@ -58,6 +58,7 @@ class _KagunitaScreenState extends State<KagunitaScreen> {
     return KidPage(
       title: 'ಕಾಗುಣಿತ',
       sub: 'Kagunita — pick a letter, then tap a form',
+      ad: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

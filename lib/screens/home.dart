@@ -22,6 +22,7 @@ class HomeScreen extends StatelessWidget {
       title: 'ಅಕ್ಷರ ಆಟ',
       sub: 'Akshara Aata · Kannada Varnamala',
       back: false,
+      ad: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

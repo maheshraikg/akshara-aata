@@ -36,6 +36,12 @@ android {
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
         // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
         // flag during build.
+        // AdMob app ID: -PADMOB_APP_ID=... or the ADMOB_APP_ID environment
+        // variable. Falls back to Google's test app ID.
+        manifestPlaceholders["admobAppId"] =
+            (project.findProperty("ADMOB_APP_ID") as String?)?.takeIf { it.isNotBlank() }
+                ?: System.getenv("ADMOB_APP_ID")?.takeIf { it.isNotBlank() }
+                ?: "ca-app-pub-3940256099942544~3347511713"
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

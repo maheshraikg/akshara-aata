@@ -31,6 +31,7 @@ class TraceMenuScreen extends StatelessWidget {
     return KidPage(
       title: 'ಬರೆಯೋಣ',
       sub: 'Pick a letter to write',
+      ad: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

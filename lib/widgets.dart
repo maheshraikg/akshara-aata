@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'ads.dart';
 import 'audio.dart';
 import 'data.dart';
 import 'state.dart';
@@ -231,6 +232,7 @@ class KidPage extends StatelessWidget {
     required this.child,
     this.back = true,
     this.scroll = true,
+    this.ad = false,
   });
 
   final String title;
@@ -238,6 +240,10 @@ class KidPage extends StatelessWidget {
   final Widget child;
   final bool back;
   final bool scroll;
+
+  /// Show a banner ad at the bottom. Only for menu screens, never during
+  /// learning, tracing or a game.
+  final bool ad;
 
   @override
   Widget build(BuildContext context) {
@@ -310,6 +316,7 @@ class KidPage extends StatelessWidget {
               Expanded(
                 child: scroll ? SingleChildScrollView(child: content) : content,
               ),
+              if (ad) const BannerAdSlot(),
             ],
           ),
         ),

@@ -3,7 +3,7 @@
 **App name (30 chars max):** ಅಕ್ಷರ ಆಟ - Kannada Alphabet
 
 **Short description (80 chars max):**
-Learn Kannada varnamala: letters, sounds, tracing & fun games. No ads.
+Learn Kannada varnamala: letters, sounds, finger tracing & 7 fun games for kids.
 
 **Full description:**
 
@@ -32,11 +32,13 @@ MADE FOR KIDS AND PARENTS
 • Stars and stickers keep children motivated
 • Progress tracking for parents
 • Settings are behind a parent check
-• No ads, no in-app purchases, no accounts
-• Works fully offline. The app has no internet permission, and nothing leaves the phone
+• No in-app purchases, no accounts
+• Child-safe ads only on menu screens, never while your child is learning or playing
+• All lessons and games work offline
 
 Tip: for the clearest pronunciation, install the Kannada voice in your phone's text-to-speech settings (Speech Services by Google → Install voice data → Kannada).
 
+**Contains ads:** Yes
 **Category:** Education
 **Tags:** Kannada, alphabet, kids, learning, varnamala
 **Contact email:** (your email)

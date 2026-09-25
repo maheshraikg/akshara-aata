@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../ads.dart';
 import '../audio.dart';
 import '../data.dart';
 import '../main.dart';
@@ -52,6 +53,7 @@ class GamesScreen extends StatelessWidget {
   Widget build(BuildContext context) => KidPage(
     title: 'ಆಟಗಳು',
     sub: 'Games — every right answer earns a ⭐',
+    ad: true,
     child: GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -481,7 +483,11 @@ class _Choice extends StatelessWidget {
 /// Shows the end-of-game screen and awards stars.
 void finishGame(BuildContext context, Game g, int score, int total) {
   reward(context, score);
-  replace(context, ResultScreen(game: g, score: score, total: total));
+  Ads.afterGame(() {
+    if (context.mounted) {
+      replace(context, ResultScreen(game: g, score: score, total: total));
+    }
+  });
 }
 
 class ResultScreen extends StatefulWidget {
@@ -526,6 +532,7 @@ class _ResultScreenState extends State<ResultScreen> {
     return KidPage(
       title: 'ಆಟ ಮುಗಿಯಿತು',
       sub: 'Game over',
+      ad: true,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 16),
         decoration: BoxDecoration(

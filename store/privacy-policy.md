@@ -4,15 +4,18 @@ _Last updated: 25 September 2026_
 
 Akshara Aata is a Kannada alphabet learning app for children.
 
-**We do not collect any personal information.** The app:
-
-- has no accounts, sign-in or registration
-- shows no advertising and contains no analytics or tracking tools
-- does not request the internet permission, so it cannot send data anywhere
-- does not access the camera, microphone, contacts, location or files
+**We do not collect personal information ourselves.** The app has no accounts, sign-in or registration, and does not access the camera, microphone, contacts, location or files.
 
 **What stays on the device:** stars, stickers, learning progress and settings are saved only on the phone, in the app's private storage. Uninstalling the app or clearing its data deletes them. Speech is produced by the phone's own text-to-speech engine.
 
-**Children:** the app is designed for children and complies with Google Play's Families Policy. Because no data is collected, none is shared with third parties.
+**Advertising:** the app shows ads from Google AdMob on menu screens and after some games. It never shows them while a child is learning, tracing or playing. Every ad request is marked as coming from a child-directed app, so Google:
+
+- shows only content rated G (suitable for all ages)
+- does not show personalized or interest-based ads, and does not build advertising profiles
+- does not use the device's advertising ID (the app removes that permission)
+
+To show and measure ads and to prevent fraud, AdMob may collect limited technical data such as the app set ID, device type, IP address and crash diagnostics. See Google's policy at https://policies.google.com/technologies/partner-sites and AdMob's child-directed treatment at https://support.google.com/admob/answer/6223431.
+
+**Children:** the app is designed for children and follows Google Play's Families Policy. It uses only Families self-certified ad SDKs. We do not knowingly collect personal information from children.
 
 **Contact:** questions about this policy can be sent to (your email).

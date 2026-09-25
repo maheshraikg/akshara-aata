@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'ads.dart';
 import 'audio.dart';
 import 'screens/home.dart';
 import 'state.dart';
@@ -15,6 +16,8 @@ Future<void> main() async {
   ]);
   final state = AppState(await SharedPreferences.getInstance());
   await Audio.instance.init(state);
+  // Not awaited: the app opens without waiting for the ad network.
+  Ads.init();
   runApp(AksharaAata(state: state));
 }
 

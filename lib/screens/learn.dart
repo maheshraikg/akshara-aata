@@ -32,6 +32,7 @@ class VowelsScreen extends StatelessWidget {
     return KidPage(
       title: 'ಸ್ವರಗಳು',
       sub: 'Vowels — tap a letter',
+      ad: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -55,6 +56,7 @@ class ConsonantsScreen extends StatelessWidget {
     return KidPage(
       title: 'ವ್ಯಂಜನಗಳು',
       sub: 'Consonants — tap a letter',
+      ad: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -93,6 +95,7 @@ class NumbersScreen extends StatelessWidget {
     return KidPage(
       title: 'ಅಂಕಿಗಳು',
       sub: 'Kannada numbers',
+      ad: true,
       child: TileGrid(
         children: [
           for (var i = 0; i < cards.length; i++)

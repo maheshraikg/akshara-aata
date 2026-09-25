@@ -180,7 +180,7 @@ class _ParentsScreenState extends State<ParentsScreen> {
             children: [
               _H('About'),
               Text(
-                'Akshara Aata teaches the 49 letters of the Kannada varnamala (13 swaras, 2 yogavahas, 34 vyanjanas), kagunita and numbers through listening, tracing and games. No ads, no accounts, no internet permission: nothing leaves this phone.',
+                'Akshara Aata teaches the 49 letters of the Kannada varnamala (13 swaras, 2 yogavahas, 34 vyanjanas), kagunita and numbers through listening, tracing and games. No accounts and no in-app purchases. Progress stays on this phone. Ads are child-safe: G-rated, not personalised, never during learning, tracing or a game.',
                 style: TextStyle(color: K.inkSoft, fontSize: 16, height: 1.5),
               ),
             ],
