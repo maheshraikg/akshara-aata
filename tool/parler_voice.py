@@ -54,12 +54,16 @@ for i, row in enumerate(rows, 1):
     if len(text) <= 3:
         text += '.'
     prompt = tok(text, return_tensors='pt')
+    # Cap the length (~86 audio tokens per second) so a single letter can't
+    # run on into extra sounds: ~2.3 s for one akshara, ~5 s for words.
+    limit = 200 if len(row['kannada']) <= 3 else 430
     with torch.inference_mode():
         audio = model.generate(
             input_ids=desc_ids.input_ids,
             attention_mask=desc_ids.attention_mask,
             prompt_input_ids=prompt.input_ids,
             prompt_attention_mask=prompt.attention_mask,
+            max_new_tokens=limit,
         )
     name = row['file'].removesuffix('.ogg')
     sf.write(os.path.join(a.out, f'{a.prefix}{name}.wav'), audio.cpu().numpy().squeeze(), rate)
