@@ -11,7 +11,8 @@ import 'state.dart';
 
 enum VoiceKind { kannada, hindi, english, none }
 
-/// Kannada speech from recordings bundled in assets/audio/, falling back to
+/// Kannada speech from recordings bundled in assets/audio/ (Vidya, female)
+/// and assets/audio_m/ (Chetan, male), falling back to
 /// the phone's text-to-speech; plus small synthesized sound effects.
 class Audio {
   Audio._();
@@ -36,6 +37,7 @@ class Audio {
 
   /// audioKey()s that have a bundled recording.
   final Set<String> _recorded = {};
+  final Set<String> _recordedMale = {};
   AudioPlayer? _voicePlayer;
 
   bool hasRecording(String kannada) => _recorded.contains(audioKey(kannada));
@@ -46,6 +48,8 @@ class Audio {
       for (final a in manifest.listAssets()) {
         if (a.startsWith('assets/audio/') && a.endsWith('.ogg')) {
           _recorded.add(a.substring(13, a.length - 4));
+        } else if (a.startsWith('assets/audio_m/') && a.endsWith('.ogg')) {
+          _recordedMale.add(a.substring(15, a.length - 4));
         }
       }
     } catch (_) {}
@@ -128,14 +132,15 @@ class Audio {
     final s = state;
     if (s == null || !s.voice) return;
     final key = audioKey(kannada);
-    if (_recorded.contains(key)) {
+    final male = s.maleVoice && _recordedMale.contains(key);
+    if (male || _recorded.contains(key)) {
       try {
         final p = _voicePlayer ??= AudioPlayer()
           ..setReleaseMode(ReleaseMode.stop);
         await p.stop();
         // Speed slider (0.2–0.7, default 0.4) maps to 0.7×–1.2× playback.
         await p.setPlaybackRate(.5 + s.rate);
-        await p.play(AssetSource('audio/$key.ogg'));
+        await p.play(AssetSource('${male ? 'audio_m' : 'audio'}/$key.ogg'));
       } catch (_) {}
       return;
     }

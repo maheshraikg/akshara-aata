@@ -18,6 +18,7 @@ class AppState extends ChangeNotifier {
         voice = m['voice'] as bool? ?? true;
         sfx = m['sfx'] as bool? ?? true;
         roman = m['roman'] as bool? ?? true;
+        maleVoice = m['maleVoice'] as bool? ?? false;
         rate = (m['rate'] as num? ?? rate).toDouble();
       } catch (_) {
         // Corrupt data: start fresh rather than crash.
@@ -34,6 +35,9 @@ class AppState extends ChangeNotifier {
   bool voice = true;
   bool sfx = true;
   bool roman = true;
+
+  /// Chetan (male) instead of Vidya (female) for built-in speech.
+  bool maleVoice = false;
   double rate = 0.4;
 
   int get stickersUnlocked => (stars ~/ 10).clamp(0, stickers.length);
@@ -48,6 +52,7 @@ class AppState extends ChangeNotifier {
         'voice': voice,
         'sfx': sfx,
         'roman': roman,
+        'maleVoice': maleVoice,
         'rate': rate,
       }),
     );

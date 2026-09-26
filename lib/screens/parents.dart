@@ -99,6 +99,11 @@ class _ParentsScreenState extends State<ParentsScreen> {
               const _H('Sound'),
               sw('Speak letters aloud', s.voice, (st, x) => st.voice = x),
               sw('Game sound effects', s.sfx, (st, x) => st.sfx = x),
+              sw(
+                'Male voice (Chetan) instead of female (Vidya)',
+                s.maleVoice,
+                (st, x) => st.maleVoice = x,
+              ),
               Row(
                 children: [
                   const Expanded(
