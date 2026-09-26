@@ -2,6 +2,9 @@
 with each file's licence and author, into commons/ + commons/meta.json.
 
   python tool/fetch_commons.py "Pronunciation of Kannada alphabet" "Lingua Libre pronunciation-kan"
+
+With WANT=assets/audio/recording-list.csv set, only files whose word (the
+part after the last '-') is one of the app's texts are fetched.
 """
 import json
 import os
@@ -68,11 +71,23 @@ def info(titles):
     return res
 
 
+def word_of(title):
+    return os.path.splitext(title.removeprefix('File:'))[0].rsplit('-', 1)[-1].strip()
+
+
+want = None
+if os.environ.get('WANT'):
+    with open(os.environ['WANT'], encoding='utf-8') as f:
+        want = {line.split(',')[1] for line in f.read().splitlines()[1:] if line}
+
 os.makedirs('commons', exist_ok=True)
 meta = {}
 for cat in sys.argv[1:]:
     titles = members(cat)
     print(cat, len(titles), flush=True)
+    if want is not None:
+        titles = [t for t in titles if word_of(t) in want]
+        print('matching the app:', len(titles), flush=True)
     for i in range(0, len(titles), 40):
         for t, m in info(titles[i:i + 40]).items():
             m['category'] = cat
