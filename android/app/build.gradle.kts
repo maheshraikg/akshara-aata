@@ -66,6 +66,11 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            // R8 shrinking removed androidx.work's Room database class (loaded
+            // by reflection by the AdMob SDK), crashing the app on launch.
+            // The code is small, so ship it unshrunk.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
