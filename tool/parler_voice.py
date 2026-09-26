@@ -57,14 +57,31 @@ for i, row in enumerate(rows, 1):
     # Cap the length (~86 audio tokens per second) so a single letter can't
     # run on into extra sounds: ~2.3 s for one akshara, ~5 s for words.
     limit = 200 if len(row['kannada']) <= 3 else 430
-    with torch.inference_mode():
-        audio = model.generate(
-            input_ids=desc_ids.input_ids,
-            attention_mask=desc_ids.attention_mask,
-            prompt_input_ids=prompt.input_ids,
-            prompt_attention_mask=prompt.attention_mask,
-            max_new_tokens=limit,
-        )
     name = row['file'].removesuffix('.ogg')
-    sf.write(os.path.join(a.out, f'{a.prefix}{name}.wav'), audio.cpu().numpy().squeeze(), rate)
+    # Sampling occasionally returns an empty clip; retry with a new seed and
+    # never let one bad clip end the whole run.
+    wav = None
+    for attempt in range(4):
+        torch.manual_seed(7 + attempt * 101)
+        try:
+            with torch.inference_mode():
+                audio = model.generate(
+                    input_ids=desc_ids.input_ids,
+                    attention_mask=desc_ids.attention_mask,
+                    prompt_input_ids=prompt.input_ids,
+                    prompt_attention_mask=prompt.attention_mask,
+                    max_new_tokens=limit,
+                )
+            data = audio.cpu().numpy().reshape(-1)
+        except Exception as e:  # noqa: BLE001
+            print(f'  attempt {attempt}: {e}', flush=True)
+            continue
+        if data.size >= rate * 0.15:
+            wav = data
+            break
+        print(f'  attempt {attempt}: empty clip', flush=True)
+    if wav is None:
+        print(f'SKIPPED {row["kannada"]}', flush=True)
+        continue
+    sf.write(os.path.join(a.out, f'{a.prefix}{name}.wav'), wav, rate)
     print(f'{i}/{len(rows)} {row["kannada"]}', flush=True)
