@@ -24,6 +24,8 @@ p.add_argument('--only', default='')
 p.add_argument('--redo', default='', help='comma-separated texts to regenerate')
 p.add_argument('--out', required=True)
 p.add_argument('--prefix', default='')
+p.add_argument('--no-dot', action='store_true', help="don't add '.' after single letters")
+p.add_argument('--desc-extra', default='', help='extra words for the voice description')
 a = p.parse_args()
 
 MODEL = 'ai4bharat/indic-parler-tts'
@@ -39,6 +41,8 @@ description = (
     'high quality, with the speaker sounding clear and very close up, and no '
     'background noise.'
 )
+if a.desc_extra:
+    description += ' ' + a.desc_extra
 desc_ids = desc_tok(description, return_tensors='pt')
 
 all_rows = list(csv.DictReader(open('assets/audio/recording-list.csv', encoding='utf-8')))
@@ -58,12 +62,12 @@ os.makedirs(a.out, exist_ok=True)
 for i, row in enumerate(rows, 1):
     text = row['kannada']
     # A lone akshara is very short; a full stop makes it a complete utterance.
-    if len(text) <= 3:
+    if len(text) <= 3 and not a.no_dot:
         text += '.'
     prompt = tok(text, return_tensors='pt')
     # Cap the length (~86 audio tokens per second) so a single letter can't
     # run on into extra sounds: ~2.3 s for one akshara, ~5 s for words.
-    limit = 200 if len(row['kannada']) <= 3 else 430
+    limit = 200 if len(text) <= 4 else 430
     name = row['file'].removesuffix('.ogg')
     # Sampling occasionally returns an empty clip; retry with a new seed and
     # never let one bad clip end the whole run.
