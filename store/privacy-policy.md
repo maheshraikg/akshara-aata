@@ -6,7 +6,7 @@ Akshara Aata is a Kannada alphabet learning app for children.
 
 **We do not collect personal information ourselves.** The app has no accounts, sign-in or registration, and does not access the camera, microphone, contacts, location or files.
 
-**What stays on the device:** stars, stickers, learning progress and settings are saved only on the phone, in the app's private storage. Uninstalling the app or clearing its data deletes them. Speech is produced by the phone's own text-to-speech engine.
+**What stays on the device:** children's first names (if a parent adds profiles), stars, stickers, streaks, learning progress, teacher writing demos and settings are saved only on the phone, in the app's private storage. They are never uploaded. Uninstalling the app or clearing its data deletes them. All Kannada speech is pre-recorded and built into the app.
 
 **Advertising:** the app shows ads from Google AdMob on menu screens and after some games. It never shows them while a child is learning, tracing or playing. Every ad request is marked as coming from a child-directed app, so Google:
 

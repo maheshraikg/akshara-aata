@@ -291,7 +291,8 @@ class RoundButton extends StatelessWidget {
   );
 }
 
-/// Wide text button.
+/// Wide text button. A leading or trailing symbol such as '🔊', '▶' or '✔'
+/// is drawn as the matching Material icon for a crisp, consistent look.
 class PillButton extends StatelessWidget {
   const PillButton(
     this.text, {
@@ -310,24 +311,70 @@ class PillButton extends StatelessWidget {
   final Color fg;
   final bool small;
 
+  static const _icons = {
+    '🔊': Icons.volume_up_rounded,
+    '✔': Icons.check_rounded,
+    '▶': Icons.play_arrow_rounded,
+    '⏸': Icons.pause_rounded,
+    '🔁': Icons.replay_rounded,
+    '🎮': Icons.sports_esports_rounded,
+    '🏠': Icons.home_rounded,
+    '+': Icons.add_rounded,
+  };
+
   @override
-  Widget build(BuildContext context) => Toy(
-    onTap: onTap,
-    color: color,
-    base: base,
-    radius: 22,
-    depth: small ? 4 : 6,
-    padding: EdgeInsets.fromLTRB(20, small ? 9 : 13, 20, small ? 5 : 9),
-    child: Text(
-      text,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: small ? 16 : 20,
-        fontWeight: FontWeight.w800,
-        color: fg,
+  Widget build(BuildContext context) {
+    final words = text.trim().split(RegExp(r'\s+'));
+    IconData? lead, trail;
+    if (words.isNotEmpty && _icons.containsKey(words.first)) {
+      lead = _icons[words.removeAt(0)];
+    }
+    if (words.isNotEmpty && _icons.containsKey(words.last)) {
+      trail = _icons[words.removeLast()];
+    }
+    final label = words.join(' ');
+    final size = small ? 16.0 : 20.0;
+    return Toy(
+      onTap: onTap,
+      color: color,
+      base: base,
+      radius: 22,
+      depth: small ? 4 : 6,
+      padding: EdgeInsets.fromLTRB(
+        lead != null ? 14 : 20,
+        small ? 9 : 13,
+        trail != null ? 14 : 20,
+        small ? 5 : 9,
       ),
-    ),
-  );
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (lead != null)
+            Padding(
+              padding: EdgeInsets.only(right: label.isEmpty ? 0 : 6, bottom: 3),
+              child: Icon(lead, size: size + 6, color: fg),
+            ),
+          if (label.isNotEmpty)
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: size,
+                  fontWeight: FontWeight.w800,
+                  color: fg,
+                ),
+              ),
+            ),
+          if (trail != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 6, bottom: 3),
+              child: Icon(trail, size: size + 6, color: fg),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class StarsPill extends StatelessWidget {

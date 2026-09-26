@@ -12,9 +12,14 @@ A Flutter app that teaches young children (ages 3–8) the Kannada varnamala. It
 | Numbers | ೦–೧೦ with number words and counting |
 | Tracing | Finger tracing on copybook lines, checked for coverage and for staying inside the letter |
 | Games | Listen & find, first letter, memory pairs, balloon pop, what comes next, kagunita builder, counting |
-| Rewards | Stars, 20 stickers, progress bar |
+| Rewards | Stars, 20 stickers, progress bar, daily streak with a 5-letters-a-day goal |
+| More words | 1–3 picture words per letter (94 in all), shown on letter cards and used in the games |
+| Alphabet song | Vowels or consonants spoken on the beat over a cheerful loop, letters light up |
+| Profiles | Several children, each with their own stars, streak and report |
+| Parent report | Letters written / explored / not yet, plus weak letters from game mistakes |
+| Writing demos | Teacher mode: write a letter once in the right stroke order; children tap "Watch how" to see it replayed with numbered strokes |
 | Voice | 586 Kannada recordings built into the app (every letter, picture word, number and kagunita form), so sound works offline on any phone. The phone's text-to-speech is only a fallback |
-| Parents | Settings behind a sum: sound, speed, English hints, reset |
+| Parents | Settings behind a sum: voice (Vidya/Chetan), speed, English help on/off (Kannada only), children, report, teacher mode |
 | Ads | AdMob banner on menu screens, a full-screen ad after every 3rd finished game. None while learning, tracing or playing |
 
 Code layout: `lib/ads.dart` (AdMob), `lib/audio.dart` (built-in recordings, speech fallback, sound effects), `lib/data.dart` (content), `lib/state.dart` (saved progress), `lib/widgets.dart` (toy-style UI parts), `lib/screens/` (one file per area).
