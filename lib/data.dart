@@ -367,6 +367,104 @@ const stickers = [
   '🐢', '🦋', '🍦', '🚀', '👑', '🎺', '🐬', '🌻', '🦁', '🏆',
 ];
 
+/// A picture word: Kannada word, romanised, emoji (shown as a 3D picture)
+/// and English meaning.
+class Word {
+  const Word(this.word, this.wordTr, this.emoji, this.en);
+  final String word;
+  final String wordTr;
+  final String emoji;
+  final String en;
+}
+
+/// More picture words, all starting with their letter, for variety in the
+/// letter cards and games.
+const extraWords = <String, List<Word>>{
+  'ಅ': [
+    Word('ಅಮ್ಮ', 'amma', '👩', 'Mother'),
+    Word('ಅಕ್ಕಿ', 'akki', '🍚', 'Rice'),
+  ],
+  'ಆ': [
+    Word('ಆಮೆ', 'aame', '🐢', 'Turtle'),
+    Word('ಆಕಾಶ', 'aakaasha', '🌤️', 'Sky'),
+  ],
+  'ಇ': [Word('ಇರುವೆ', 'iruve', '🐜', 'Ant')],
+  'ಈ': [Word('ಈಜು', 'iiju', '🏊', 'Swimming')],
+  'ಉ': [
+    Word('ಉಪ್ಪು', 'uppu', '🧂', 'Salt'),
+    Word('ಉಡುಗೊರೆ', 'uDugore', '🎁', 'Gift'),
+  ],
+  'ಊ': [Word('ಊರು', 'uuru', '🏘️', 'Village')],
+  'ಎ': [Word('ಎತ್ತು', 'ettu', '🐂', 'Ox')],
+  'ಏ': [Word('ಏಡಿ', 'eeDi', '🦀', 'Crab')],
+  'ಐ': [Word('ಐಸ್‌ಕ್ರೀಮ್', 'aiskriim', '🍨', 'Ice cream')],
+  'ಓ': [Word('ಓಟ', 'ooTa', '🏃', 'Running')],
+  'ಕ': [
+    Word('ಕಪ್ಪೆ', 'kappe', '🐸', 'Frog'),
+    Word('ಕರಡಿ', 'karaDi', '🐻', 'Bear'),
+  ],
+  'ಖ': [Word('ಖಾರ', 'khaara', '🌶️', 'Spicy')],
+  'ಗ': [
+    Word('ಗಿಳಿ', 'giLi', '🦜', 'Parrot'),
+    Word('ಗುಲಾಬಿ', 'gulaabi', '🌹', 'Rose'),
+  ],
+  'ಘ': [Word('ಘೇಂಡಾಮೃಗ', 'gheenDaamruga', '🦏', 'Rhino')],
+  'ಚ': [
+    Word('ಚಂದ್ರ', 'chandra', '🌙', 'Moon'),
+    Word('ಚಿಟ್ಟೆ', 'chiTTe', '🦋', 'Butterfly'),
+  ],
+  'ಜ': [
+    Word('ಜಿರಾಫೆ', 'jiraaphe', '🦒', 'Giraffe'),
+    Word('ಜೇನು', 'jeenu', '🍯', 'Honey'),
+  ],
+  'ಟ': [Word('ಟೊಮೆಟೊ', 'TomeTo', '🍅', 'Tomato')],
+  'ಡ': [Word('ಡಬ್ಬ', 'Dabba', '📦', 'Box')],
+  'ತ': [Word('ತೆಂಗಿನಕಾಯಿ', 'tenginakaayi', '🥥', 'Coconut')],
+  'ದ': [
+    Word('ದೋಣಿ', 'dooNi', '⛵', 'Boat'),
+    Word('ದ್ರಾಕ್ಷಿ', 'draakshi', '🍇', 'Grapes'),
+  ],
+  'ನ': [
+    Word('ನಾಯಿ', 'naayi', '🐕', 'Dog'),
+    Word('ನಕ್ಷತ್ರ', 'nakshatra', '⭐', 'Star'),
+  ],
+  'ಪ': [
+    Word('ಪಕ್ಷಿ', 'pakshi', '🐦', 'Bird'),
+    Word('ಪೆನ್ಸಿಲ್', 'pensil', '✏️', 'Pencil'),
+  ],
+  'ಬ': [Word('ಬೆಕ್ಕು', 'bekku', '🐈', 'Cat'), Word('ಬಸ್', 'bas', '🚌', 'Bus')],
+  'ಮ': [
+    Word('ಮೀನು', 'miinu', '🐟', 'Fish'),
+    Word('ಮನೆ', 'mane', '🏠', 'House'),
+  ],
+  'ರ': [Word('ರಾಜ', 'raaja', '🤴', 'King')],
+  'ಲ': [Word('ಲಿಂಬೆ', 'limbe', '🍋', 'Lemon')],
+  'ವ': [Word('ವಿಮಾನ', 'vimaana', '✈️', 'Aeroplane')],
+  'ಶ': [Word('ಶಾಲೆ', 'shaale', '🏫', 'School')],
+  'ಸ': [
+    Word('ಸಿಂಹ', 'simha', '🦁', 'Lion'),
+    Word('ಸೇಬು', 'seebu', '🍏', 'Apple'),
+  ],
+  'ಹ': [
+    Word('ಹಾವು', 'haavu', '🐍', 'Snake'),
+    Word('ಹಲ್ಲು', 'hallu', '🦷', 'Tooth'),
+  ],
+};
+
+/// The letter's main word first, then its extra words.
+List<Word> wordsFor(Letter l) => [
+  Word(l.word, l.wordTr, l.emoji, l.en),
+  ...?extraWords[l.ch],
+];
+
+/// Every (letter, word) pair whose word starts with the letter, for the
+/// picture and memory games.
+List<(Letter, Word)> startWordPairs() => [
+  for (final l in letters)
+    for (final w in wordsFor(l))
+      if (w.word.startsWith(l.ch) && (l.start || w.word != l.word)) (l, w),
+];
+
 List<Letter> byGroup(Group g) => letters.where((l) => l.group == g).toList();
 
 /// Consonant root without the inherent "a" (ka → k).
@@ -382,6 +480,9 @@ List<(String, String)> spokenTexts() {
   for (final l in letters) {
     out[l.ch] = l.tr;
     out[l.word] = l.wordTr;
+    for (final w in extraWords[l.ch] ?? const <Word>[]) {
+      out[w.word] = w.wordTr;
+    }
   }
   for (final n in numbers) {
     out[n.word] = n.wordTr;
