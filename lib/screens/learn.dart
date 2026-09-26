@@ -272,12 +272,16 @@ class _LetterCardScreenState extends State<LetterCardScreen>
               if (isNum)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    item.count == 0
-                        ? '🫙'
-                        : List.filled(item.count!, '⭐').join(),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 30, height: 1.3),
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: item.count == 0
+                        ? const [Pic('🫙', size: 56)]
+                        : [
+                            for (var k = 0; k < item.count!; k++)
+                              const Pic('⭐', size: 40),
+                          ],
                   ),
                 ),
               Toy(
@@ -292,12 +296,7 @@ class _LetterCardScreenState extends State<LetterCardScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (item.emoji != null) ...[
-                      Bob(
-                        child: Text(
-                          item.emoji!,
-                          style: const TextStyle(fontSize: 56),
-                        ),
-                      ),
+                      Bob(child: Pic(item.emoji!, size: 80)),
                       const SizedBox(width: 14),
                     ],
                     Flexible(

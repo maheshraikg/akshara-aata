@@ -32,9 +32,9 @@ class K {
   static const tealDeep = Color(0xFF0F9994);
   static const white = Color(0xFFFFFFFF);
   static const shade = Color(0x262B2140);
-  static const skyTop = Color(0xFF8FD3FF);
-  static const skyMid = Color(0xFFD4F0FF);
-  static const skyBottom = Color(0xFFFFF4DA);
+  static const skyTop = Color(0xFF45B4FF);
+  static const skyMid = Color(0xFFA8E2FF);
+  static const skyBottom = Color(0xFFFFF1BF);
 
   static const rainbow = <(Color, Color)>[
     (red, redDeep),
@@ -210,6 +210,33 @@ class _ToyState extends State<Toy> {
   }
 }
 
+/// Professional 3D illustration for an emoji (Microsoft Fluent Emoji 3D,
+/// MIT license) from assets/pics/, falling back to the emoji itself.
+class Pic extends StatelessWidget {
+  const Pic(this.emoji, {super.key, this.size = 48});
+  final String emoji;
+  final double size;
+
+  static String keyOf(String e) => e.runes
+      .where((r) => r != 0xFE0F)
+      .map((r) => r.toRadixString(16))
+      .join('_');
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+    'assets/pics/${keyOf(emoji)}.webp',
+    width: size,
+    height: size,
+    filterQuality: FilterQuality.medium,
+    semanticLabel: '',
+    errorBuilder: (_, _, _) => SizedBox(
+      width: size,
+      height: size,
+      child: FittedBox(child: Text(emoji)),
+    ),
+  );
+}
+
 /// Round icon button (back, listen, next…).
 class RoundButton extends StatelessWidget {
   const RoundButton(
@@ -229,6 +256,26 @@ class RoundButton extends StatelessWidget {
   final double size;
   final String? label;
 
+  // Button symbols map to Material rounded icons for a crisp, consistent look.
+  static const _icons = {
+    '⬅️': Icons.arrow_back_rounded,
+    '◀': Icons.chevron_left_rounded,
+    '▶': Icons.chevron_right_rounded,
+    '🔊': Icons.volume_up_rounded,
+    '✏️': Icons.edit_rounded,
+    '🧽': Icons.cleaning_services_rounded,
+  };
+
+  Widget _glyph() {
+    final fg = color.computeLuminance() > .8 ? K.ink : Colors.white;
+    final data = _icons[icon];
+    if (data != null) return Icon(data, size: size * .55, color: fg);
+    return Text(
+      icon,
+      style: TextStyle(fontSize: size * .42, color: fg),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Toy(
     onTap: onTap,
@@ -239,15 +286,7 @@ class RoundButton extends StatelessWidget {
     child: SizedBox(
       width: size,
       height: size,
-      child: Center(
-        child: Text(
-          icon,
-          style: TextStyle(
-            fontSize: size * .42,
-            color: color.computeLuminance() > .8 ? K.ink : Colors.white,
-          ),
-        ),
-      ),
+      child: Center(child: _glyph()),
     ),
   );
 }
@@ -319,14 +358,24 @@ class StarsPill extends StatelessWidget {
               BoxShadow(color: K.turmericDeep, offset: Offset(0, 4)),
             ],
           ),
-          child: Text(
-            '⭐ ${s.stars}',
-            style: const TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-              color: K.ink,
-              fontFeatures: [FontFeature.tabularFigures()],
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Pic('⭐', size: 24),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${s.stars}',
+                style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: K.ink,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -382,7 +431,7 @@ class KidPage extends StatelessWidget {
                     margin: const EdgeInsets.fromLTRB(12, 8, 12, 10),
                     padding: const EdgeInsets.fromLTRB(8, 8, 10, 8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: .82),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: const [
                         BoxShadow(
@@ -469,18 +518,6 @@ class _SkyPainter extends CustomPainter {
           stops: [0, .35, .8],
         ).createShader(rect),
     );
-    // sun
-    final sunC = Offset(size.width - 40, 40);
-    canvas.drawCircle(
-      sunC,
-      70,
-      Paint()..color = const Color(0xFFFFE27A).withValues(alpha: .35),
-    );
-    canvas.drawCircle(
-      sunC,
-      42,
-      Paint()..color = const Color(0xFFFFE27A).withValues(alpha: .7),
-    );
     // clouds
     final cloud = Paint()..color = Colors.white.withValues(alpha: .75);
     void puff(double x, double y, double s) {
@@ -505,7 +542,7 @@ class _SkyPainter extends CustomPainter {
             fontFamily: 'BalooTamma2',
             fontWeight: FontWeight.w800,
             fontSize: 44 + (i % 3) * 14,
-            color: K.rainbow[i].$1.withValues(alpha: .10),
+            color: Colors.white.withValues(alpha: .28),
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -683,8 +720,8 @@ class LetterTile extends StatelessWidget {
       delay: (ch.runes.first % 7) / 20,
       child: Toy(
         onTap: onTap,
-        color: K.pastel(c, .18),
-        base: K.pastel(deep, .55),
+        color: Colors.white,
+        base: c,
         radius: 22,
         depth: 5,
         semanticLabel: label ?? ch,
@@ -709,11 +746,7 @@ class LetterTile extends StatelessWidget {
               ),
             ),
             if (done)
-              const Positioned(
-                top: 3,
-                right: 6,
-                child: Text('⭐', style: TextStyle(fontSize: 13)),
-              ),
+              const Positioned(top: 4, right: 5, child: Pic('⭐', size: 16)),
             if (caption != null)
               Positioned(
                 bottom: 4,

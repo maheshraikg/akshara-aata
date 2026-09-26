@@ -26,6 +26,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/audio/
+    - assets/pics/
   fonts:
     - family: BalooTamma2
       fonts:

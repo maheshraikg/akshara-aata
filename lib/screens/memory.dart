@@ -152,15 +152,17 @@ class _FlipCard extends StatelessWidget {
                       ? Center(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: FittedBox(
-                              child: Text(
-                                card.face,
-                                style: const TextStyle(
-                                  fontSize: 44,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
+                            child: card.isPicture
+                                ? Pic(card.face, size: 64)
+                                : FittedBox(
+                                    child: Text(
+                                      card.face,
+                                      style: const TextStyle(
+                                        fontSize: 44,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
                           ),
                         )
                       : const CustomPaint(painter: _BackPainter()),

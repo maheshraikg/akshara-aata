@@ -98,6 +98,10 @@ After the app is live, add an `app-ads.txt` file to your developer website, as A
 
 For every update, raise the number after `+` in `pubspec.yaml` (`version: 1.0.1+2`).
 
+## Pictures and icons
+
+`assets/pics/` holds the 3D illustrations: 93 WebP files, 192 px, about 750 KB in total. They come from [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (3D style, MIT license). Each file is named by the emoji's code points (🐘 → `1f418.webp`). The `Pic` widget in `lib/widgets.dart` shows the picture and falls back to the emoji if a file is missing. Buttons use Material rounded icons.
+
 ## Built-in sounds
 
 `assets/audio/` holds one small `.ogg` file for everything the app says (586 in all). The file name is the text's Unicode code points (ಕಾ → `c95_cbe.ogg`), and `assets/audio/recording-list.csv` lists every file with its Kannada text.

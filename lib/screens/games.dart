@@ -28,16 +28,9 @@ class GamesScreen extends StatelessWidget {
     (Game.picture, 'ಚಿತ್ರ ಆಟ', 'First letter', '🖼️', K.blue, K.blueDeep),
     (Game.memory, 'ಜೋಡಿ ಆಟ', 'Memory pairs', '🃏', K.green, K.greenDeep),
     (Game.balloon, 'ಬಲೂನ್ ಆಟ', 'Balloon pop', '🎈', K.plum, K.plumDeep),
-    (
-      Game.next,
-      'ಮುಂದೆ ಏನು?',
-      'What comes next',
-      '➡️',
-      K.turmeric,
-      K.turmericDeep,
-    ),
-    (Game.kagunita, 'ಕಾಗುಣಿತ ಆಟ', 'Add the sign', 'ಕಿ', K.red, K.redDeep),
-    (Game.count, 'ಎಣಿಸು', 'Count & pick', '🔢', K.blue, K.blueDeep),
+    (Game.next, 'ಮುಂದೆ ಏನು?', 'What comes next', '➡️', K.orange, K.orangeDeep),
+    (Game.kagunita, 'ಕಾಗುಣಿತ ಆಟ', 'Add the sign', '📝', K.pink, K.pinkDeep),
+    (Game.count, 'ಎಣಿಸು', 'Count & pick', '🧮', K.teal, K.tealDeep),
   ];
 
   static void open(BuildContext context, Game g, {bool swap = false}) {
@@ -64,13 +57,12 @@ class GamesScreen extends StatelessWidget {
       children: [
         for (final g in _games)
           HomeBlock(
-            glyph: g.$4,
+            pic: g.$4,
             title: g.$2,
             sub: g.$3,
             color: g.$5,
             base: g.$6,
-            fg: g.$5 == K.turmeric ? K.ink : K.white,
-            glyphSize: 52,
+            glyphSize: 58,
             onTap: () => open(context, g.$1),
           ),
       ],
@@ -166,7 +158,7 @@ _Round _makeRound(Game g, AppState s) {
         prompt: (_, say) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(ans.emoji, style: const TextStyle(fontSize: 78)),
+            Bob(child: Pic(ans.emoji, size: 120)),
             const SizedBox(height: 6),
             PillButton(
               '🔊 ${s.roman ? ans.en : 'ಕೇಳು'}',
@@ -277,11 +269,14 @@ _Round _makeRound(Game g, AppState s) {
           children: [
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 300),
-              child: Text(
-                List.filled(ans.n, thing).join(' '),
+              child: Wrap(
                 key: const ValueKey('count-row'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 34, height: 1.3),
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (var i = 0; i < ans.n; i++) Pic(thing, size: 52),
+                ],
               ),
             ),
             const Text('ಎಷ್ಟು? How many?', style: _q),
@@ -581,13 +576,16 @@ class _ResultScreenState extends State<ResultScreen> {
         ),
         child: Column(
           children: [
-            Text(
-              r == 3
-                  ? '🏆'
-                  : r == 2
-                  ? '🥳'
-                  : '🌱',
-              style: const TextStyle(fontSize: 80),
+            Bob(
+              height: 8,
+              child: Pic(
+                r == 3
+                    ? '🏆'
+                    : r == 2
+                    ? '🥳'
+                    : '🌱',
+                size: 120,
+              ),
             ),
             Text(
               r == 3
@@ -605,7 +603,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   for (var i = 0; i < 3; i++)
                     Opacity(
                       opacity: i < r ? 1 : .2,
-                      child: const Text('⭐', style: TextStyle(fontSize: 38)),
+                      child: const Pic('⭐', size: 50),
                     ),
                 ],
               ),

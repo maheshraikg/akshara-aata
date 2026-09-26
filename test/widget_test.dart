@@ -5,6 +5,7 @@ import 'package:akshara_aata/data.dart';
 import 'package:akshara_aata/main.dart';
 import 'package:akshara_aata/screens/trace.dart';
 import 'package:akshara_aata/state.dart';
+import 'package:akshara_aata/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -60,6 +61,14 @@ void main() {
     }
     expect(texts, containsAll(numbers.map((n) => n.word)));
     expect(texts, contains('ಕೌ'));
+  });
+
+  test('every picture word and sticker has a bundled 3D image', () {
+    final emoji = {...letters.map((l) => l.emoji), ...stickers};
+    for (final e in emoji) {
+      final f = File('assets/pics/${Pic.keyOf(e)}.webp');
+      expect(f.existsSync(), isTrue, reason: '$e has no picture');
+    }
   });
 
   test('Kannada maps onto Devanagari for the Hindi voice fallback', () {
@@ -135,7 +144,10 @@ void main() {
     await tester.tap(find.text('ಆ').first);
     await tester.pumpAndSettle(const Duration(seconds: 1));
     expect(find.text('2 / 15'), findsOneWidget);
-    expect(find.text('🐘'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is Pic && w.emoji == '🐘'),
+      findsOneWidget,
+    );
     expect(state.seen, contains('ಆ'));
   });
 
@@ -158,11 +170,11 @@ void main() {
     await tester.pumpAndSettle();
 
     for (var round = 0; round < 8; round++) {
-      // The prompt row holds N emoji; the right answer is numbers[N].
-      final prompt = tester
-          .widget<Text>(find.byKey(const ValueKey('count-row')))
-          .data!;
-      final n = prompt.split(' ').where((x) => x.isNotEmpty).length;
+      // The prompt row holds N pictures; the right answer is numbers[N].
+      final n = tester
+          .widget<Wrap>(find.byKey(const ValueKey('count-row')))
+          .children
+          .length;
       await tester.tap(find.text(numbers[n].ch));
       await tester.pump(const Duration(milliseconds: 1400));
       await tester.pumpAndSettle();

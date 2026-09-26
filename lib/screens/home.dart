@@ -34,6 +34,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               HomeBlock(
                 glyph: 'ಅ',
+                pic: '🐘',
                 title: 'ಸ್ವರಗಳು',
                 sub: 'Vowels · 13',
                 color: K.red,
@@ -42,6 +43,7 @@ class HomeScreen extends StatelessWidget {
               ),
               HomeBlock(
                 glyph: 'ಕ',
+                pic: '🦚',
                 title: 'ವ್ಯಂಜನಗಳು',
                 sub: 'Consonants · 34',
                 color: K.blue,
@@ -50,6 +52,7 @@ class HomeScreen extends StatelessWidget {
               ),
               HomeBlock(
                 glyph: 'ಕಾ',
+                pic: '🧩',
                 title: 'ಕಾಗುಣಿತ',
                 sub: 'Letter + vowel sign',
                 color: K.plum,
@@ -58,6 +61,7 @@ class HomeScreen extends StatelessWidget {
               ),
               HomeBlock(
                 glyph: '೩',
+                pic: '🧮',
                 title: 'ಅಂಕಿಗಳು',
                 sub: 'Numbers ೦–೧೦',
                 color: K.teal,
@@ -65,7 +69,7 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => push(context, const NumbersScreen()),
               ),
               HomeBlock(
-                glyph: '✏️',
+                pic: '✏️',
                 title: 'ಬರೆಯೋಣ',
                 sub: 'Trace & write',
                 color: K.orange,
@@ -73,7 +77,7 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => push(context, const TraceMenuScreen()),
               ),
               HomeBlock(
-                glyph: '🎈',
+                pic: '🎮',
                 title: 'ಆಟಗಳು',
                 sub: '7 fun games',
                 color: K.pink,
@@ -129,10 +133,7 @@ class HomeScreen extends StatelessWidget {
                                   BlendMode.dst,
                                 )
                               : const ColorFilter.matrix(_grey),
-                          child: Text(
-                            stickers[i],
-                            style: const TextStyle(fontSize: 28),
-                          ),
+                          child: Pic(stickers[i], size: 34),
                         ),
                       ),
                   ],
@@ -191,7 +192,8 @@ class _BlockGrid extends StatelessWidget {
 class HomeBlock extends StatelessWidget {
   const HomeBlock({
     super.key,
-    required this.glyph,
+    this.glyph = '',
+    this.pic,
     required this.title,
     required this.sub,
     required this.color,
@@ -201,7 +203,11 @@ class HomeBlock extends StatelessWidget {
     this.glyphSize = 76,
   });
 
+  /// Kannada letter shown in a round badge (optional).
   final String glyph;
+
+  /// Emoji whose 3D illustration decorates the block.
+  final String? pic;
   final String title;
   final String sub;
   final Color color;
@@ -222,20 +228,57 @@ class HomeBlock extends StatelessWidget {
       borderRadius: BorderRadius.circular(22),
       child: Stack(
         children: [
-          Positioned(
-            right: 10,
-            top: -8,
-            child: Text(
-              glyph,
-              style: TextStyle(
-                fontSize: glyphSize,
-                fontWeight: FontWeight.w800,
-                height: 1.2,
-                color: fg.withValues(alpha: .92),
-                shadows: [Shadow(color: base, offset: const Offset(0, 4))],
+          if (pic != null)
+            Positioned(
+              right: 6,
+              top: 6,
+              child: Bob(
+                height: 5,
+                ms: 1600,
+                child: Pic(pic!, size: glyphSize + 12),
+              ),
+            )
+          else
+            Positioned(
+              right: 10,
+              top: -8,
+              child: Text(
+                glyph,
+                style: TextStyle(
+                  fontSize: glyphSize,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                  color: fg.withValues(alpha: .92),
+                  shadows: [Shadow(color: base, offset: const Offset(0, 4))],
+                ),
               ),
             ),
-          ),
+          if (pic != null && glyph.isNotEmpty)
+            Positioned(
+              left: 12,
+              top: 12,
+              child: Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.only(top: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: base, offset: const Offset(0, 3)),
+                  ],
+                ),
+                child: Text(
+                  glyph,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: base,
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             left: 16,
             right: 12,
@@ -319,13 +362,13 @@ class _Hero extends StatelessWidget {
     padding: const EdgeInsets.fromLTRB(12, 14, 16, 14),
     decoration: BoxDecoration(
       gradient: const LinearGradient(
-        colors: [Color(0xFFFF8FB1), Color(0xFFFFB86B)],
+        colors: [Color(0xFFFF4F8B), Color(0xFFFF9A3C)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(28),
       boxShadow: const [
-        BoxShadow(color: Color(0xFFE06C8E), offset: Offset(0, 6)),
+        BoxShadow(color: Color(0xFFD63A6E), offset: Offset(0, 6)),
         BoxShadow(
           color: Color(0x262B2140),
           offset: Offset(0, 12),
@@ -335,10 +378,7 @@ class _Hero extends StatelessWidget {
     ),
     child: Row(
       children: [
-        const Bob(
-          height: 8,
-          child: Text('🐘', style: TextStyle(fontSize: 70, height: 1.1)),
-        ),
+        const Bob(height: 8, child: Pic('🐘', size: 92)),
         const SizedBox(width: 10),
         Expanded(
           child: Container(
@@ -351,7 +391,7 @@ class _Hero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ನಮಸ್ಕಾರ! 👋',
+                  'ನಮಸ್ಕಾರ!',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -425,7 +465,7 @@ class _LetterOfTheDay extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ಇಂದಿನ ಅಕ್ಷರ · LETTER OF THE DAY',
+                  'ಇಂದಿನ ಅಕ್ಷರ · TODAY',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -450,7 +490,9 @@ class _LetterOfTheDay extends StatelessWidget {
             ),
           ),
           Bob(
-            child: Text(item.emoji ?? '', style: const TextStyle(fontSize: 48)),
+            child: item.emoji == null
+                ? const SizedBox()
+                : Pic(item.emoji!, size: 64),
           ),
         ],
       ),
