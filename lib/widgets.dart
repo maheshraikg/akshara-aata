@@ -467,7 +467,7 @@ class KidPage extends StatelessWidget {
                                   height: 1.2,
                                 ),
                               ),
-                              if (sub != null)
+                              if (sub != null && AppScope.of(context).roman)
                                 Text(
                                   sub!,
                                   maxLines: 1,

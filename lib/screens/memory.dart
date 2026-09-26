@@ -8,12 +8,13 @@ import '../widgets.dart';
 import 'games.dart';
 
 class _MCard {
-  _MCard(this.letter, this.isPicture);
+  _MCard(this.letter, this.word, this.isPicture);
   final Letter letter;
+  final Word word;
   final bool isPicture;
   bool open = false;
   bool matched = false;
-  String get face => isPicture ? letter.emoji : letter.ch;
+  String get face => isPicture ? word.emoji : letter.ch;
 }
 
 /// Match each letter with its picture: 6 pairs.
@@ -25,14 +26,17 @@ class MemoryScreen extends StatefulWidget {
 }
 
 class _MemoryScreenState extends State<MemoryScreen> {
-  late final List<Letter> _pairs = sampleOf(
-    letters.where((l) => l.start).toList(),
-    6,
-    const [],
-  );
+  // Six different letters, each with one of its picture words.
+  late final List<(Letter, Word)> _pairs = () {
+    final seen = <Letter>{};
+    return [
+      for (final p in shuffled(startWordPairs()))
+        if (seen.add(p.$1)) p,
+    ].take(6).toList();
+  }();
   late final List<_MCard> _cards = shuffled([
-    for (final l in _pairs) _MCard(l, false),
-    for (final l in _pairs) _MCard(l, true),
+    for (final (l, w) in _pairs) _MCard(l, w, false),
+    for (final (l, w) in _pairs) _MCard(l, w, true),
   ]);
   final List<_MCard> _open = [];
   int _moves = 0;
@@ -44,7 +48,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     Audio.instance.tap();
     setState(() => c.open = true);
     c.isPicture
-        ? Audio.instance.speak(c.letter.word, c.letter.wordTr)
+        ? Audio.instance.speak(c.word.word, c.word.wordTr)
         : Audio.instance.speak(c.letter.ch, c.letter.tr);
     _open.add(c);
     if (_open.length < 2) return;

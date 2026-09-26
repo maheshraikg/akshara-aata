@@ -8,6 +8,7 @@ import 'games.dart';
 import 'kagunita.dart';
 import 'learn.dart';
 import 'parents.dart';
+import 'song.dart';
 import 'trace.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -29,6 +30,21 @@ class HomeScreen extends StatelessWidget {
           const _Hero(),
           const SizedBox(height: 14),
           const _LetterOfTheDay(),
+          const SizedBox(height: 14),
+          const _StreakCard(),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 110,
+            child: HomeBlock(
+              pic: '🎵',
+              title: 'ಅಕ್ಷರ ಹಾಡು',
+              sub: 'Alphabet song',
+              color: K.green,
+              base: K.greenDeep,
+              glyphSize: 62,
+              onTap: () => push(context, const SongScreen()),
+            ),
+          ),
           const SizedBox(height: 16),
           _BlockGrid(
             children: [
@@ -299,15 +315,16 @@ class HomeBlock extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  sub,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: fg.withValues(alpha: .92),
+                if (AppScope.of(context).roman)
+                  Text(
+                    sub,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: fg.withValues(alpha: .92),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -353,71 +370,209 @@ class _MascotState extends State<_Mascot> with SingleTickerProviderStateMixin {
   }
 }
 
-/// Sunny welcome card with the elephant mascot and a speech bubble.
+/// Sunny welcome card: the elephant greets the current child by name.
+/// Tapping the child's picture switches between children.
 class _Hero extends StatelessWidget {
   const _Hero();
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(12, 14, 16, 14),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFFFF4F8B), Color(0xFFFF9A3C)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: const [
-        BoxShadow(color: Color(0xFFD63A6E), offset: Offset(0, 6)),
-        BoxShadow(
-          color: Color(0x262B2140),
-          offset: Offset(0, 12),
-          blurRadius: 16,
+  Widget build(BuildContext context) {
+    final s = AppScope.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 14, 16, 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF4F8B), Color(0xFFFF9A3C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-      ],
-    ),
-    child: Row(
-      children: [
-        const Bob(height: 8, child: Pic('🐘', size: 92)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(color: Color(0xFFD63A6E), offset: Offset(0, 6)),
+          BoxShadow(
+            color: Color(0x262B2140),
+            offset: Offset(0, 12),
+            blurRadius: 16,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Bob(height: 8, child: Pic('🐘', size: 88)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 10, 10, 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ನಮಸ್ಕಾರ, ${s.child.name}!',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 23,
+                            fontWeight: FontWeight.w800,
+                            height: 1.15,
+                            color: K.redDeep,
+                          ),
+                        ),
+                        const Text(
+                          'ಬಾ, ಕನ್ನಡ ಅಕ್ಷರ ಕಲಿಯೋಣ!',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: K.ink,
+                          ),
+                        ),
+                        if (s.roman)
+                          const Text(
+                            "Let's learn Kannada letters",
+                            style: TextStyle(fontSize: 13.5, color: K.inkSoft),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (s.profiles.length > 1)
+                    Semantics(
+                      button: true,
+                      label: 'Switch child',
+                      child: GestureDetector(
+                        onTap: () => _pickChild(context),
+                        child: Pic(s.child.avatar, size: 46),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            child: const Column(
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void _pickChild(BuildContext context) {
+  final s = AppScope.read(context);
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          alignment: WrapAlignment.center,
+          children: [
+            for (var i = 0; i < s.profiles.length; i++)
+              GestureDetector(
+                onTap: () {
+                  s.switchProfile(i);
+                  Navigator.pop(ctx);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i == s.current ? K.pastel(K.green, .3) : K.paper,
+                      ),
+                      child: Pic(s.profiles[i].avatar, size: 64),
+                    ),
+                    Text(
+                      s.profiles[i].name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Daily streak and today's letters (goal: 5 a day).
+class _StreakCard extends StatelessWidget {
+  const _StreakCard();
+  static const goal = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppScope.of(context);
+    final today = s.todayCount;
+    final streak = s.streak;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [BoxShadow(color: K.shade, offset: Offset(0, 5))],
+      ),
+      child: Row(
+        children: [
+          Pic(streak > 0 ? '🔥' : '🌱', size: 50),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ನಮಸ್ಕಾರ!',
-                  style: TextStyle(
-                    fontSize: 26,
+                  streak > 1
+                      ? '$streak ದಿನಗಳ ಸರಣಿ!'
+                      : today > 0
+                      ? 'ಇಂದು ಚೆನ್ನಾಗಿ ಕಲಿತೆ!'
+                      : 'ಇಂದಿನ ಕಲಿಕೆ ಶುರು ಮಾಡೋಣ',
+                  style: const TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    height: 1.15,
-                    color: K.redDeep,
                   ),
                 ),
-                Text(
-                  'ಬಾ, ಕನ್ನಡ ಅಕ್ಷರ ಕಲಿಯೋಣ!',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: K.ink,
+                if (s.roman)
+                  Text(
+                    streak > 1
+                        ? '$streak-day streak · $today / $goal letters today'
+                        : '$today / $goal letters today',
+                    style: const TextStyle(fontSize: 13.5, color: K.inkSoft),
                   ),
-                ),
-                Text(
-                  "Let's learn Kannada letters",
-                  style: TextStyle(fontSize: 14, color: K.inkSoft),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    value: (today / goal).clamp(0.0, 1.0),
+                    minHeight: 10,
+                    color: today >= goal ? K.green : K.orange,
+                    backgroundColor: K.paper,
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      ],
-    ),
-  );
+          if (today >= goal) ...[
+            const SizedBox(width: 8),
+            const Pic('🏅', size: 40),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 /// A different letter every day, one tap from its card.

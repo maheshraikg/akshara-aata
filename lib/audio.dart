@@ -164,6 +164,22 @@ class Audio {
     _tts.stop().then((_) {}, onError: (_) {});
   }
 
+  AudioPlayer? _music;
+
+  /// Loops the alphabet song's backing track quietly under the voice.
+  Future<void> startMusic() async {
+    try {
+      final m = _music ??= AudioPlayer();
+      await m.setReleaseMode(ReleaseMode.loop);
+      await m.setVolume(.35);
+      await m.play(AssetSource('music/song_loop.ogg'));
+    } catch (_) {}
+  }
+
+  void stopMusic() {
+    _music?.stop().then((_) {}, onError: (_) {});
+  }
+
   void tap() => _play('tap');
   void right() => _play('right');
   void wrong() => _play('wrong');

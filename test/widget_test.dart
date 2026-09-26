@@ -77,6 +77,64 @@ void main() {
     expect(Audio.toDevanagari('೩'), '३');
   });
 
+  test('extra picture words start with their letter and have pictures', () {
+    for (final e in extraWords.entries) {
+      for (final w in e.value) {
+        expect(w.word.startsWith(e.key), isTrue, reason: w.word);
+        expect(
+          File('assets/pics/${Pic.keyOf(w.emoji)}.webp').existsSync(),
+          isTrue,
+          reason: w.emoji,
+        );
+      }
+    }
+    expect(startWordPairs().length, greaterThan(70));
+  });
+
+  test('streak counts consecutive days and resets after a gap', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    var now = DateTime(2026, 9, 1, 10);
+    final s = AppState(prefs, clock: () => now);
+    s.markSeen('ಅ');
+    expect(s.streak, 1);
+    expect(s.todayCount, 1);
+    now = DateTime(2026, 9, 2, 9);
+    expect(s.todayCount, 0);
+    s.markSeen('ಆ');
+    expect(s.streak, 2);
+    now = DateTime(2026, 9, 5, 9);
+    expect(s.streak, 0);
+    s.markSeen('ಇ');
+    expect(s.streak, 1);
+  });
+
+  test('weak letters rise with mistakes and fall with right answers', () async {
+    final s = await freshState();
+    s.recordAnswer('ಕ', right: false);
+    s.recordAnswer('ಕ', right: false);
+    s.recordAnswer('ಗ', right: false);
+    expect(s.weakLetters, ['ಕ', 'ಗ']);
+    s.recordAnswer('ಗ', right: true);
+    expect(s.weakLetters, ['ಕ']);
+  });
+
+  test('old single-child data becomes the first profile', () async {
+    SharedPreferences.setMockInitialValues({
+      'akshara-aata-v1':
+          '{"stars": 12, "seen": ["ಅ"], "traced": [], "roman": false}',
+    });
+    final s = AppState(await SharedPreferences.getInstance());
+    expect(s.profiles.length, 1);
+    expect(s.stars, 12);
+    expect(s.seen, contains('ಅ'));
+    expect(s.roman, isFalse);
+    s.addProfile('Anu', '👧');
+    expect(s.stars, 0);
+    s.switchProfile(0);
+    expect(s.stars, 12);
+  });
+
   test('stars unlock a sticker every 10', () async {
     final s = await freshState();
     expect(s.addStars(9), isNull);

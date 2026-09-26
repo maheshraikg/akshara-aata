@@ -78,8 +78,11 @@ class _Round {
     required this.options,
     this.say,
     this.after,
+    this.target,
   });
 
+  /// Letter being tested, for the parent report's weak letters.
+  final String? target;
   final String title;
   final String sub;
   final Widget Function(BuildContext context, VoidCallback say) prompt;
@@ -123,6 +126,7 @@ _Round _makeRound(Game g, AppState s) {
         ...sampleOf(pool, 3, [ans]),
       ]);
       return _Round(
+        target: ans.ch,
         title: 'ಕೇಳಿ ಹುಡುಕು',
         sub: 'Listen, then tap the letter',
         say: () => Audio.instance.speak(ans.ch, ans.tr),
@@ -145,23 +149,22 @@ _Round _makeRound(Game g, AppState s) {
         options: [for (final o in opts) (o.ch, o == ans)],
       );
     case Game.picture:
-      final pool = letters.where((l) => l.start).toList();
-      final ans = pick(pool);
-      final opts = shuffled([
-        ans,
-        ...sampleOf(pool, 3, [ans]),
-      ]);
+      final pairs = startWordPairs();
+      final (ansL, w) = pick(pairs);
+      final pool = letters.where((l) => l != ansL).toList();
+      final opts = shuffled([ansL, ...sampleOf(pool, 3, const [])]);
       return _Round(
         title: 'ಚಿತ್ರ ಆಟ',
         sub: 'Which letter does it start with?',
-        say: () => Audio.instance.speak(ans.word, ans.wordTr),
+        target: ansL.ch,
+        say: () => Audio.instance.speak(w.word, w.wordTr),
         prompt: (_, say) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Bob(child: Pic(ans.emoji, size: 120)),
+            Bob(child: Pic(w.emoji, size: 120)),
             const SizedBox(height: 6),
             PillButton(
-              '🔊 ${s.roman ? ans.en : 'ಕೇಳು'}',
+              '🔊 ${s.roman ? w.en : 'ಕೇಳು'}',
               small: true,
               color: K.white,
               base: K.shade,
@@ -170,7 +173,8 @@ _Round _makeRound(Game g, AppState s) {
             ),
           ],
         ),
-        options: [for (final o in opts) (o.ch, o == ans)],
+        options: [for (final o in opts) (o.ch, o == ansL)],
+        after: () => Audio.instance.speak(w.word, w.wordTr),
       );
     case Game.next:
       final seqs = <List<(String, String, String)>>[
@@ -329,6 +333,11 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void _choose(int i) {
     if (_done || _wrong.contains(i)) return;
+    final t = _r.target;
+    if (t != null) {
+      AppScope.read(context)
+          .recordAnswer(t, right: _r.options[i].$2 && _firstTry);
+    }
     if (_r.options[i].$2) {
       setState(() {
         _done = true;

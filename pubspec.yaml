@@ -28,6 +28,7 @@ flutter:
     - assets/audio/
     - assets/audio_m/
     - assets/pics/
+    - assets/music/
   fonts:
     - family: BalooTamma2
       fonts:

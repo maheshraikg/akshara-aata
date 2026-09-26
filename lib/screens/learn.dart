@@ -326,6 +326,55 @@ class _LetterCardScreenState extends State<LetterCardScreen>
                   ],
                 ),
               ),
+              if (!isNum && (extraWords[item.ch]?.isNotEmpty ?? false)) ...[
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final w in extraWords[item.ch]!)
+                      Toy(
+                        onTap: () => Audio.instance.speak(w.word, w.wordTr),
+                        color: Colors.white,
+                        base: K.pastel(deep, .35),
+                        depth: 4,
+                        radius: 20,
+                        semanticLabel: '${w.wordTr} ${w.en}',
+                        padding: const EdgeInsets.fromLTRB(10, 6, 14, 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Pic(w.emoji, size: 40),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  w.word,
+                                  style: const TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.2,
+                                  ),
+                                ),
+                                if (s.roman)
+                                  Text(
+                                    w.en,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      color: K.inkSoft,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 22),
               Wrap(
                 spacing: 12,

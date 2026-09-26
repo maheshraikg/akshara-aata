@@ -105,8 +105,15 @@ class TraceScreen extends StatefulWidget {
   State<TraceScreen> createState() => _TraceScreenState();
 }
 
-class _TraceScreenState extends State<TraceScreen> {
+class _TraceScreenState extends State<TraceScreen>
+    with SingleTickerProviderStateMixin {
   final List<_Stroke> _strokes = [];
+
+  /// Plays the teacher's recorded writing demo (0 = hidden, 0–1 = drawing).
+  late final AnimationController _demo = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2600),
+  )..addListener(() => setState(() {}));
   Color _crayon = K.red;
   String _msg = '';
   double _size = 300;
@@ -119,8 +126,35 @@ class _TraceScreenState extends State<TraceScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) Audio.instance.speak(item.say, item.sayRoman);
+      if (!mounted) return;
+      Audio.instance.speak(item.say, item.sayRoman);
+      if (AppScope.read(context).demos.containsKey(item.ch)) _watch();
     });
+  }
+
+  @override
+  void dispose() {
+    _demo.dispose();
+    super.dispose();
+  }
+
+  void _watch() {
+    _demo.forward(from: 0).whenComplete(() {
+      if (mounted) _demo.value = 0;
+    });
+  }
+
+  void _saveDemo() {
+    if (_strokes.isEmpty) {
+      toast(context, 'Write the letter first');
+      return;
+    }
+    AppScope.read(context).saveDemo(item.ch, [
+      for (final st in _strokes)
+        [for (final pt in st.points) Offset(pt.dx / _size, pt.dy / _size)],
+    ]);
+    toast(context, 'Writing demo saved for ${item.ch}');
+    setState(_strokes.clear);
   }
 
   void _go(int i) {
@@ -207,6 +241,11 @@ class _TraceScreenState extends State<TraceScreen> {
                           LetterLayout(item.ch, _size),
                           _strokes,
                           _brush,
+                          demo: _demo.value > 0
+                              ? AppScope.read(context).demos[item.ch]
+                              : null,
+                          demoT: _demo.value,
+                          size: _size,
                         ),
                       ),
                     ),
@@ -296,6 +335,46 @@ class _TraceScreenState extends State<TraceScreen> {
               ),
             ],
           ),
+          if (AppScope.of(context).demos.containsKey(item.ch) ||
+              AppScope.of(context).teacherMode) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                if (AppScope.of(context).demos.containsKey(item.ch))
+                  PillButton(
+                    '▶ ನೋಡು · Watch how',
+                    small: true,
+                    color: K.plum,
+                    base: K.plumDeep,
+                    onTap: _watch,
+                  ),
+                if (AppScope.of(context).teacherMode) ...[
+                  PillButton(
+                    'Save demo',
+                    small: true,
+                    color: K.orange,
+                    base: K.orangeDeep,
+                    onTap: _saveDemo,
+                  ),
+                  if (AppScope.of(context).demos.containsKey(item.ch))
+                    PillButton(
+                      'Delete demo',
+                      small: true,
+                      color: Colors.white,
+                      base: K.shade,
+                      fg: K.ink,
+                      onTap: () {
+                        AppScope.read(context).deleteDemo(item.ch);
+                        toast(context, 'Demo deleted');
+                      },
+                    ),
+                ],
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -303,10 +382,23 @@ class _TraceScreenState extends State<TraceScreen> {
 }
 
 class _TracePainter extends CustomPainter {
-  _TracePainter(this.layout, this.strokes, this.brush);
+  _TracePainter(
+    this.layout,
+    this.strokes,
+    this.brush, {
+    this.demo,
+    this.demoT = 0,
+    this.size = 1,
+  });
   final LetterLayout layout;
   final List<_Stroke> strokes;
   final double brush;
+
+  /// Recorded demo strokes (0–1 coordinates) drawn up to [demoT] of their
+  /// total length, with a dot at the pen tip.
+  final List<List<Offset>>? demo;
+  final double demoT;
+  final double size;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -331,6 +423,44 @@ class _TracePainter extends CustomPainter {
     );
     for (final s in strokes) {
       drawStroke(canvas, s.points, s.color, brush);
+    }
+    final d = demo;
+    if (d != null && d.isNotEmpty) {
+      final total = d.fold<int>(0, (n, st) => n + st.length);
+      var left = (total * demoT).round();
+      Offset? tip;
+      for (var i = 0; i < d.length && left > 0; i++) {
+        final pts = [for (final p in d[i].take(left)) p * this.size];
+        left -= d[i].length;
+        drawStroke(canvas, pts, K.plum.withValues(alpha: .75), brush * .8);
+        if (pts.isNotEmpty) tip = pts.last;
+        // Stroke number at its start, so children see the order.
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '${i + 1}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final start = d[i].first * this.size;
+        canvas.drawCircle(start, 13, Paint()..color = K.plumDeep);
+        tp.paint(canvas, start - Offset(tp.width / 2, tp.height / 2));
+      }
+      if (tip != null) {
+        canvas.drawCircle(tip, brush * .7, Paint()..color = K.turmeric);
+        canvas.drawCircle(
+          tip,
+          brush * .7,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3
+            ..color = Colors.white,
+        );
+      }
     }
   }
 

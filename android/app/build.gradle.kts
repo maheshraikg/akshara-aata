@@ -66,11 +66,15 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
-            // R8 shrinking removed androidx.work's Room database class (loaded
-            // by reflection by the AdMob SDK), crashing the app on launch.
-            // The code is small, so ship it unshrunk.
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // Shrink with R8. proguard-rules.pro keeps the WorkManager/Room
+            // classes AdMob loads by reflection (removing them crashed the app
+            // on launch); the emulator launch test in CI guards this.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

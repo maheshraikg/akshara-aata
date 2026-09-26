@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../audio.dart';
+import '../data.dart';
 import '../main.dart';
 import '../state.dart';
 import '../widgets.dart';
@@ -144,25 +145,126 @@ class _ParentsScreenState extends State<ParentsScreen> {
           ),
           _Panel(
             children: [
-              const _H('Display'),
-              sw(
-                'Show English sounds (a, aa, ka…) and meanings',
-                s.roman,
-                (st, x) => st.roman = x,
+              const _H('Children'),
+              const Text(
+                'Each child keeps their own stars, stickers, streak and report. Tap to switch.',
+                style: TextStyle(color: K.inkSoft, fontSize: 15),
               ),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (var i = 0; i < s.profiles.length; i++)
+                    GestureDetector(
+                      onTap: () => s.switchProfile(i),
+                      onLongPress: s.profiles.length > 1
+                          ? () => _confirmRemove(context, i)
+                          : null,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(10, 8, 14, 4),
+                        decoration: BoxDecoration(
+                          color: i == s.current
+                              ? K.pastel(K.green, .25)
+                              : K.paper,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: i == s.current
+                                ? K.green
+                                : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Pic(s.profiles[i].avatar, size: 36),
+                            const SizedBox(width: 8),
+                            Text(
+                              s.profiles[i].name,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  PillButton(
+                    '+ Add child',
+                    small: true,
+                    color: K.blue,
+                    base: K.blueDeep,
+                    onTap: () => _addChild(context),
+                  ),
+                ],
+              ),
+              if (s.profiles.length > 1)
+                const Text(
+                  'Long-press a name to remove that child.',
+                  style: TextStyle(color: K.inkSoft, fontSize: 13),
+                ),
             ],
           ),
           _Panel(
             children: [
-              const _H('Progress'),
+              _H('Report · ${s.child.name}'),
               Text(
-                '${s.seen.length} letters explored · ${s.traced.length} letters written · ${s.stars} stars',
-                style: const TextStyle(color: K.inkSoft, fontSize: 16),
+                '${s.seen.length} / 49 letters explored · ${s.traced.length} / 49 written · ${s.stars} stars · ${s.streak}-day streak',
+                style: const TextStyle(color: K.inkSoft, fontSize: 15),
               ),
+              const _Legend(),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final l in letters)
+                    Container(
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        color: s.traced.contains(l.ch)
+                            ? K.pastel(K.green, .45)
+                            : s.seen.contains(l.ch)
+                            ? K.pastel(K.turmeric, .45)
+                            : const Color(0xFFEDEAF2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: s.child.weak.containsKey(l.ch)
+                            ? Border.all(color: K.red, width: 2.5)
+                            : null,
+                      ),
+                      child: Text(
+                        l.ch,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (s.weakLetters.isNotEmpty)
+                Text(
+                  'Needs practice: ${s.weakLetters.take(8).join('  ')}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: K.redDeep,
+                  ),
+                )
+              else
+                const Text(
+                  'No weak letters yet. Mistakes in the games show up here.',
+                  style: TextStyle(color: K.inkSoft, fontSize: 14),
+                ),
               Align(
                 alignment: Alignment.centerLeft,
                 child: PillButton(
-                  _armed ? 'Tap again to erase all progress' : 'Reset progress',
+                  _armed
+                      ? 'Tap again to erase ${s.child.name}\'s progress'
+                      : 'Reset this child\'s progress',
                   small: true,
                   color: K.red,
                   base: K.redDeep,
@@ -179,11 +281,35 @@ class _ParentsScreenState extends State<ParentsScreen> {
               ),
             ],
           ),
+          _Panel(
+            children: [
+              const _H('Language'),
+              sw(
+                'English help (sounds like "ka", meanings and subtitles). Turn off for Kannada only.',
+                s.roman,
+                (st, x) => st.roman = x,
+              ),
+            ],
+          ),
+          _Panel(
+            children: [
+              const _H('Writing demos (teachers)'),
+              const Text(
+                'Show children the correct stroke order: turn this on, open a letter in "ಬರೆಯೋಣ", write it slowly in the right order, then tap "Save demo". Children then see a "Watch" button that replays your writing.',
+                style: TextStyle(color: K.inkSoft, fontSize: 15, height: 1.4),
+              ),
+              sw('Teacher mode', s.teacherMode, (st, x) => st.teacherMode = x),
+              Text(
+                '${s.demos.length} letters have a writing demo.',
+                style: const TextStyle(fontSize: 15),
+              ),
+            ],
+          ),
           const _Panel(
             children: [
               _H('About'),
               Text(
-                'Akshara Aata teaches the 49 letters of the Kannada varnamala (13 swaras, 2 yogavahas, 34 vyanjanas), kagunita and numbers through listening, tracing and games. No accounts and no in-app purchases. Progress stays on this phone. Ads are child-safe: G-rated, not personalised, never during learning, tracing or a game. Kannada voice: AI4Bharat Indic-TTS (IIT Madras), MIT license. Pictures: Microsoft Fluent Emoji 3D, MIT license.',
+                'Akshara Aata teaches the 49 letters of the Kannada varnamala (13 swaras, 2 yogavahas, 34 vyanjanas), kagunita and numbers through listening, tracing and games. No accounts and no in-app purchases. Progress stays on this phone. Ads are child-safe: G-rated, not personalised, never during learning, tracing or a game. Kannada voices: AI4Bharat Indic Parler-TTS (Apache-2.0). Pictures: Microsoft Fluent Emoji 3D, MIT license.',
                 style: TextStyle(color: K.inkSoft, fontSize: 16, height: 1.5),
               ),
             ],
@@ -226,6 +352,126 @@ class _Panel extends StatelessWidget {
           if (i > 0) const SizedBox(height: 12),
           children[i],
         ],
+      ],
+    ),
+  );
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget dot(Color c, String t) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: c,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(t, style: const TextStyle(fontSize: 13, color: K.inkSoft)),
+      ],
+    );
+    return Wrap(
+      spacing: 14,
+      runSpacing: 4,
+      children: [
+        dot(K.pastel(K.green, .45), 'Written'),
+        dot(K.pastel(K.turmeric, .45), 'Explored'),
+        dot(const Color(0xFFEDEAF2), 'Not yet'),
+        dot(Colors.white, 'Red border = needs practice'),
+      ],
+    );
+  }
+}
+
+const _avatars = ['🧒', '👧', '👦', '🐘', '🦚', '🐯', '🦁', '🐬'];
+
+void _addChild(BuildContext context) {
+  final s = AppScope.read(context);
+  final name = TextEditingController();
+  var avatar = _avatars[s.profiles.length % _avatars.length];
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setD) => AlertDialog(
+        title: const Text('Add a child'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: name,
+              autofocus: true,
+              maxLength: 16,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final a in _avatars)
+                  GestureDetector(
+                    onTap: () => setD(() => avatar = a),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: a == avatar
+                            ? K.pastel(K.green, .35)
+                            : Colors.transparent,
+                      ),
+                      child: Pic(a, size: 40),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final n = name.text.trim();
+              if (n.isEmpty) return;
+              s.addProfile(n, avatar);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+void _confirmRemove(BuildContext context, int i) {
+  final s = AppScope.read(context);
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Remove ${s.profiles[i].name}?'),
+      content: const Text('Their stars and progress will be deleted.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Keep'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: K.red),
+          onPressed: () {
+            s.removeProfile(i);
+            Navigator.pop(ctx);
+          },
+          child: const Text('Remove'),
+        ),
       ],
     ),
   );
