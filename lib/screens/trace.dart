@@ -47,6 +47,54 @@ class TraceMenuScreen extends StatelessWidget {
   }
 }
 
+/// Stroke-by-stroke writing animation for one of the 49 letters, if any.
+String? writingGuideFor(String ch) => letters.any((l) => l.ch == ch)
+    ? 'assets/writing/${audioKey(ch)}.webp'
+    : null;
+
+/// Shows a pencil writing [ch] in the right stroke order.
+Future<void> showWritingGuide(BuildContext context, String ch) {
+  final asset = writingGuideFor(ch);
+  if (asset == null) return Future.value();
+  return showDialog<void>(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: K.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'ಹೀಗೆ ಬರೆ · How to write',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 280, maxHeight: 280),
+              child: Image.asset(
+                asset,
+                gaplessPlayback: true,
+                semanticLabel: 'How to write $ch',
+                errorBuilder: (_, _, _) =>
+                    Text(ch, style: const TextStyle(fontSize: 120)),
+              ),
+            ),
+            const SizedBox(height: 14),
+            PillButton(
+              '✔ ಈಗ ನೀನು ಬರೆ · Your turn',
+              color: K.green,
+              base: K.greenDeep,
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _Stroke {
   _Stroke(this.color);
   final Color color;
@@ -128,7 +176,13 @@ class _TraceScreenState extends State<TraceScreen>
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       Audio.instance.speak(item.say, item.sayRoman);
-      if (AppScope.read(context).demos.containsKey(item.ch)) _watch();
+      final state = AppScope.read(context);
+      if (state.demos.containsKey(item.ch)) {
+        _watch();
+      } else if (!state.traced.contains(item.ch)) {
+        // First time: show how the letter is written before tracing.
+        showWritingGuide(context, item.ch);
+      }
     });
   }
 
@@ -335,7 +389,8 @@ class _TraceScreenState extends State<TraceScreen>
               ),
             ],
           ),
-          if (AppScope.of(context).demos.containsKey(item.ch) ||
+          if (writingGuideFor(item.ch) != null ||
+              AppScope.of(context).demos.containsKey(item.ch) ||
               AppScope.of(context).teacherMode) ...[
             const SizedBox(height: 14),
             Wrap(
@@ -343,12 +398,20 @@ class _TraceScreenState extends State<TraceScreen>
               runSpacing: 10,
               alignment: WrapAlignment.center,
               children: [
-                if (AppScope.of(context).demos.containsKey(item.ch))
+                if (writingGuideFor(item.ch) != null)
                   PillButton(
                     '▶ ನೋಡು · Watch how',
                     small: true,
                     color: K.plum,
                     base: K.plumDeep,
+                    onTap: () => showWritingGuide(context, item.ch),
+                  ),
+                if (AppScope.of(context).demos.containsKey(item.ch))
+                  PillButton(
+                    "▶ Teacher's demo",
+                    small: true,
+                    color: K.blue,
+                    base: K.blueDeep,
                     onTap: _watch,
                   ),
                 if (AppScope.of(context).teacherMode) ...[

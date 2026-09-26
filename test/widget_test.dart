@@ -71,6 +71,15 @@ void main() {
     }
   });
 
+  test('every letter has a stroke-order writing animation', () {
+    for (final l in letters) {
+      final asset = writingGuideFor(l.ch);
+      expect(asset, isNotNull, reason: l.ch);
+      expect(File(asset!).existsSync(), isTrue, reason: '${l.ch} has no guide');
+    }
+    expect(writingGuideFor('೧'), isNull);
+  });
+
   test('Kannada maps onto Devanagari for the Hindi voice fallback', () {
     expect(Audio.toDevanagari('ಕ'), 'क');
     expect(Audio.toDevanagari('ಆನೆ'), 'आने');

@@ -121,6 +121,10 @@ To add a new word: add it to `lib/data.dart`, run `dart run tool/generate_audio.
 
 **Own recordings:** the recording studio in the parents' area records any item on the phone. "Send recordings" makes a zip, and `python3 tool/import_recordings.py <zip>` builds it into the app for everyone.
 
+## Writing guides
+
+`assets/writing/` holds a stroke-by-stroke writing animation for each of the 49 letters: a pencil writes the letter in the right order. They are by Gopala Krishna A, from the Commons category [Animations of Kannada letters](https://commons.wikimedia.org/wiki/Category:Animations_of_Kannada_letters), licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The converted WebP files (white background, 280 px, last frame held 1.5 s) are under the same licence. The tracing screen shows the animation the first time a child writes a letter, and again with "▶ ನೋಡು · Watch how". To rebuild them: `pip install pillow`, then `python3 tool/import_writing.py commons/` on the unpacked `commons-kannada-writing.tgz`.
+
 ## Content fixes
 
 Each letter is one line in `lib/data.dart`:
