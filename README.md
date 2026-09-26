@@ -111,11 +111,13 @@ For every update, raise the number after `+` in `pubspec.yaml` (`version: 1.0.1+
 
 `assets/audio/` holds one small `.ogg` file for everything the app says (586 in all). The file name is the text's Unicode code points (ಕಾ → `c95_cbe.ogg`), and `assets/audio/recording-list.csv` lists every file with its Kannada text.
 
-**Voice:** a natural neural Kannada voice, [AI4Bharat Indic-TTS](https://github.com/AI4Bharat/Indic-TTS) (FastPitch + HiFi-GAN, MIT license). It was trained on studio recordings of native Kannada speakers (IIT Madras IndicTTS data). The files are made by `tool/generate_voice.py`, and its header explains the one-time setup. Single letters are slowed slightly (pitch unchanged) so small children hear them clearly.
+**Letter sounds (human):** the 49 letters are recordings by a native Kannada speaker, [Surabhi18](https://commons.wikimedia.org/wiki/User:Surabhi18), from the Wikimedia Commons category [Pronunciation of Kannada alphabet](https://commons.wikimedia.org/wiki/Category:Pronunciation_of_Kannada_alphabet), licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The trimmed, loudness-normalised versions in `assets/audio/` are under the same licence. To refresh them: run the `Akshara Aata Commons recordings` workflow, unpack `commons-kannada.tgz` from the `akshara-aata-voice-keep` release, then run `python3 tool/import_commons.py commons/`.
 
-To add a new word: add it to `lib/data.dart`, run `dart run tool/generate_audio.dart` to update `recording-list.csv`, then run `generate_voice.py`. The Dart tool uses espeak-ng only as a quick placeholder.
+**Words and everything else (AI):** [AI4Bharat Indic Parler-TTS](https://huggingface.co/ai4bharat/indic-parler-tts) (Apache-2.0), with the speakers Vidya (female, `assets/audio/`) and Chetan (male, `assets/audio_m/`). The files are made by `tool/parler_voice.py` in the `Akshara Aata voice` workflow. Where a male clip is missing, the app uses the female one.
 
-**Human recordings:** any file can still be replaced with a recording of a real speaker. Use the same file name, and convert it with `ffmpeg -i ka.m4a -ac 1 -ar 22050 -c:a libvorbis -q:a 4 c95.ogg`.
+To add a new word: add it to `lib/data.dart`, run `dart run tool/generate_audio.dart` to update `recording-list.csv`, then generate its voice with `tool/parler_voice.py --only`.
+
+**Own recordings:** the recording studio in the parents' area records any item on the phone. "Send recordings" makes a zip, and `python3 tool/import_recordings.py <zip>` builds it into the app for everyone.
 
 ## Content fixes
 
