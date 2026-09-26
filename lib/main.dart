@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'ads.dart';
 import 'audio.dart';
+import 'recordings.dart';
 import 'screens/home.dart';
 import 'state.dart';
 import 'widgets.dart';
@@ -23,6 +24,7 @@ Future<void> main() async {
   );
   final state = AppState(await SharedPreferences.getInstance());
   Audio.instance.init(state);
+  unawaited(Recordings.instance.init());
   unawaited(Ads.init());
   runApp(AksharaAata(state: state));
 }

@@ -7,6 +7,7 @@ import '../data.dart';
 import '../main.dart';
 import '../state.dart';
 import '../widgets.dart';
+import 'studio.dart';
 
 /// Keeps settings away from small children: answer a sum to continue.
 class ParentGateScreen extends StatefulWidget {
@@ -288,6 +289,25 @@ class _ParentsScreenState extends State<ParentsScreen> {
                 'English help (sounds like "ka", meanings and subtitles). Turn off for Kannada only.',
                 s.roman,
                 (st, x) => st.roman = x,
+              ),
+            ],
+          ),
+          _Panel(
+            children: [
+              const _H('Record a native voice'),
+              const Text(
+                'AI voices can mispronounce single Kannada letters (for example ಖ said as two syllables, or ಕ with English breath). A parent or teacher who speaks Kannada can record every letter here. Recordings replace the built-in voice on this phone, and "Send recordings" shares them so they can be built into the app for every child.',
+                style: TextStyle(color: K.inkSoft, fontSize: 15, height: 1.4),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: PillButton(
+                  'Open recording studio',
+                  small: true,
+                  color: K.red,
+                  base: K.redDeep,
+                  onTap: () => push(context, const StudioScreen()),
+                ),
               ),
             ],
           ),

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import 'data.dart';
+import 'recordings.dart';
 import 'state.dart';
 
 enum VoiceKind { kannada, hindi, english, none }
@@ -128,10 +129,32 @@ class Audio {
     return out.toString();
   }
 
-  Future<void> speak(String kannada, String roman) async {
+  /// Plays the built-in voice even if a recording exists (studio compare).
+  Future<void> speakBuiltIn(String kannada, String roman) =>
+      speak(kannada, roman, builtIn: true);
+
+  Future<void> speak(
+    String kannada,
+    String roman, {
+    bool builtIn = false,
+  }) async {
     final s = state;
     if (s == null || !s.voice) return;
     final key = audioKey(kannada);
+    // A native speaker's own recording on this phone comes first.
+    final own = !builtIn && Recordings.instance.has(kannada)
+        ? Recordings.instance.pathFor(kannada)
+        : null;
+    if (own != null) {
+      try {
+        final p = _voicePlayer ??= AudioPlayer()
+          ..setReleaseMode(ReleaseMode.stop);
+        await p.stop();
+        await p.setPlaybackRate(1);
+        await p.play(DeviceFileSource(own));
+      } catch (_) {}
+      return;
+    }
     final male = s.maleVoice && _recordedMale.contains(key);
     if (male || _recorded.contains(key)) {
       try {
