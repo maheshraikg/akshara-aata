@@ -21,6 +21,7 @@ p = argparse.ArgumentParser()
 p.add_argument('--speaker', default='Anu')
 p.add_argument('--shard', default='0/1')
 p.add_argument('--only', default='')
+p.add_argument('--redo', default='', help='comma-separated texts to regenerate')
 p.add_argument('--out', required=True)
 p.add_argument('--prefix', default='')
 a = p.parse_args()
@@ -40,11 +41,17 @@ description = (
 )
 desc_ids = desc_tok(description, return_tensors='pt')
 
-if a.only:
+all_rows = list(csv.DictReader(open('assets/audio/recording-list.csv', encoding='utf-8')))
+if a.redo:
+    # Regenerate chosen texts, keeping their app file names.
+    wanted = set(a.redo.split(','))
+    rows = [r for r in all_rows if r['kannada'] in wanted]
+elif a.only:
     rows = [{'file': f'{i:02d}', 'kannada': t} for i, t in enumerate(a.only.split(','))]
 else:
-    rows = list(csv.DictReader(open('assets/audio/recording-list.csv', encoding='utf-8')))
-    k, n = map(int, a.shard.split('/'))
+    rows = all_rows
+k, n = map(int, a.shard.split('/'))
+if not a.only:
     rows = rows[k::n]
 
 os.makedirs(a.out, exist_ok=True)
@@ -61,7 +68,8 @@ for i, row in enumerate(rows, 1):
     # Sampling occasionally returns an empty clip; retry with a new seed and
     # never let one bad clip end the whole run.
     wav = None
-    for attempt in range(4):
+    best = None
+    for attempt in range(6):
         torch.manual_seed(7 + attempt * 101)
         try:
             with torch.inference_mode():
@@ -76,10 +84,18 @@ for i, row in enumerate(rows, 1):
         except Exception as e:  # noqa: BLE001
             print(f'  attempt {attempt}: {e}', flush=True)
             continue
-        if data.size >= rate * 0.15:
+        # Reject empty clips and clips that ran to the length cap (usually
+        # extra sounds after the letter).
+        seconds = data.size / rate
+        cap = limit / 86
+        if 0.3 <= seconds < cap * 0.85:
             wav = data
             break
-        print(f'  attempt {attempt}: empty clip', flush=True)
+        print(f'  attempt {attempt}: {seconds:.2f}s rejected', flush=True)
+        if seconds >= 0.3 and (best is None or data.size < best.size):
+            best = data
+    if wav is None:
+        wav = best
     if wav is None:
         print(f'SKIPPED {row["kannada"]}', flush=True)
         continue
