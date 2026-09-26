@@ -64,8 +64,23 @@ class AksharaAata extends StatelessWidget {
 /// Pushes a screen, stopping any speech from the one we leave.
 Future<T?> push<T>(BuildContext context, Widget screen) {
   Audio.instance.stop();
-  return Navigator.of(context)
-      .push<T>(MaterialPageRoute(builder: (_) => screen));
+  return Navigator.of(context).push<T>(
+    PageRouteBuilder(
+      pageBuilder: (_, _, _) => screen,
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 200),
+      transitionsBuilder: (_, a, _, child) {
+        final curve = CurvedAnimation(parent: a, curve: Curves.easeOutBack);
+        return FadeTransition(
+          opacity: a,
+          child: ScaleTransition(
+            scale: Tween(begin: .92, end: 1.0).animate(curve),
+            child: child,
+          ),
+        );
+      },
+    ),
+  );
 }
 
 /// Swaps the current screen (next letter, play again…).

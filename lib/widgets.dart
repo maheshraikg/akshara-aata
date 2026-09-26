@@ -7,25 +7,56 @@ import 'audio.dart';
 import 'data.dart';
 import 'state.dart';
 
-/// Channapatna-toy palette: lacquer colours on an ivory ground.
+/// Bright "candy toy" palette on a sunny sky. Every colour has a deeper
+/// partner used for the 3D base under buttons.
 class K {
-  static const ivory = Color(0xFFFFF7E8);
-  static const paper = Color(0xFFF7E9CF);
-  static const ink = Color(0xFF2A1D14);
-  static const inkSoft = Color(0xFF6B5646);
-  static const red = Color(0xFFC8323C);
-  static const redDeep = Color(0xFF9C2130);
-  static const turmeric = Color(0xFFF2B21B);
-  static const turmericDeep = Color(0xFFC98A00);
-  static const green = Color(0xFF2F9A5A);
-  static const greenDeep = Color(0xFF1F7442);
-  static const blue = Color(0xFF1E6FB0);
-  static const blueDeep = Color(0xFF145188);
-  static const plum = Color(0xFF7A3E8E);
-  static const plumDeep = Color(0xFF5A2A6B);
-  static const orange = Color(0xFFF28C1B);
-  static const white = Color(0xFFFFFDF8);
-  static const shade = Color(0x2E2A1D14);
+  static const ivory = Color(0xFFFFF8EC);
+  static const paper = Color(0xFFFFEFD2);
+  static const ink = Color(0xFF2B2140);
+  static const inkSoft = Color(0xFF6E6388);
+  static const red = Color(0xFFFF5D73);
+  static const redDeep = Color(0xFFD63A55);
+  static const turmeric = Color(0xFFFFC53D);
+  static const turmericDeep = Color(0xFFE09600);
+  static const green = Color(0xFF2FC27A);
+  static const greenDeep = Color(0xFF1B9357);
+  static const blue = Color(0xFF3D8BFF);
+  static const blueDeep = Color(0xFF1F63D6);
+  static const plum = Color(0xFF9B6BFF);
+  static const plumDeep = Color(0xFF6E43D6);
+  static const orange = Color(0xFFFF9636);
+  static const orangeDeep = Color(0xFFDD6F0C);
+  static const pink = Color(0xFFFF77C3);
+  static const pinkDeep = Color(0xFFDB4C9D);
+  static const teal = Color(0xFF1FC7C1);
+  static const tealDeep = Color(0xFF0F9994);
+  static const white = Color(0xFFFFFFFF);
+  static const shade = Color(0x262B2140);
+  static const skyTop = Color(0xFF8FD3FF);
+  static const skyMid = Color(0xFFD4F0FF);
+  static const skyBottom = Color(0xFFFFF4DA);
+
+  static const rainbow = <(Color, Color)>[
+    (red, redDeep),
+    (orange, orangeDeep),
+    (turmeric, turmericDeep),
+    (green, greenDeep),
+    (teal, tealDeep),
+    (blue, blueDeep),
+    (plum, plumDeep),
+    (pink, pinkDeep),
+  ];
+
+  /// A stable rainbow colour for any text (same letter, same colour).
+  static (Color, Color) tintFor(String s) {
+    var h = 0;
+    for (final r in s.runes) {
+      h = (h * 31 + r) & 0x7fffffff;
+    }
+    return rainbow[h % rainbow.length];
+  }
+
+  static (Color, Color) tint(int i) => rainbow[i % rainbow.length];
 
   static Color of(CardColor c) => switch (c) {
     CardColor.red => red,
@@ -33,9 +64,25 @@ class K {
     CardColor.plum => plum,
     CardColor.green => green,
   };
+
+  static Color deepOf(CardColor c) => switch (c) {
+    CardColor.red => redDeep,
+    CardColor.blue => blueDeep,
+    CardColor.plum => plumDeep,
+    CardColor.green => greenDeep,
+  };
+
+  static Color lighten(Color c, double by) {
+    final h = HSLColor.fromColor(c);
+    return h.withLightness((h.lightness + by).clamp(0.0, 1.0)).toColor();
+  }
+
+  /// Soft pastel version for large backgrounds.
+  static Color pastel(Color c, [double t = .16]) => Color.lerp(white, c, t)!;
 }
 
-/// A pressable toy block: flat face sitting on a darker base that sinks when tapped.
+/// A pressable candy-toy button: glossy gradient face on a deeper base that
+/// sinks and squishes when tapped.
 class Toy extends StatefulWidget {
   const Toy({
     super.key,
@@ -43,11 +90,12 @@ class Toy extends StatefulWidget {
     this.onTap,
     this.color = K.white,
     this.base = K.shade,
-    this.radius = 20,
+    this.radius = 22,
     this.depth = 6,
     this.padding = EdgeInsets.zero,
     this.semanticLabel,
     this.sound = true,
+    this.gloss = true,
   });
 
   final Widget child;
@@ -59,6 +107,7 @@ class Toy extends StatefulWidget {
   final EdgeInsets padding;
   final String? semanticLabel;
   final bool sound;
+  final bool gloss;
 
   @override
   State<Toy> createState() => _ToyState();
@@ -71,6 +120,8 @@ class _ToyState extends State<Toy> {
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
     final sink = _down ? widget.depth - 2 : 0.0;
+    final light = widget.color.computeLuminance() > .8;
+    final r = BorderRadius.circular(widget.radius);
     return Semantics(
       button: true,
       enabled: enabled,
@@ -87,25 +138,70 @@ class _ToyState extends State<Toy> {
               }
             : null,
         child: Opacity(
-          opacity: enabled ? 1 : .35,
+          opacity: enabled ? 1 : .4,
           child: Padding(
             padding: EdgeInsets.only(bottom: widget.depth),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 60),
-              transform: Matrix4.translationValues(0, sink, 0),
-              decoration: BoxDecoration(
-                color: widget.color,
-                borderRadius: BorderRadius.circular(widget.radius),
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.base,
-                    offset: Offset(0, widget.depth - sink),
-                    blurRadius: 0,
-                  ),
-                ],
+            child: AnimatedScale(
+              scale: _down ? .96 : 1,
+              duration: const Duration(milliseconds: 90),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 60),
+                transform: Matrix4.translationValues(0, sink, 0),
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  gradient: light
+                      ? null
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [K.lighten(widget.color, .07), widget.color],
+                        ),
+                  borderRadius: r,
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.base,
+                      offset: Offset(0, widget.depth - sink),
+                    ),
+                    BoxShadow(
+                      color: const Color(0x1F2B2140),
+                      offset: Offset(0, widget.depth - sink + 5),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  fit: StackFit.passthrough,
+                  children: [
+                    Padding(padding: widget.padding, child: widget.child),
+                    if (widget.gloss && !light)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: FractionallySizedBox(
+                              widthFactor: .86,
+                              heightFactor: .42,
+                              child: Container(
+                                margin: const EdgeInsets.only(top: 3),
+                                decoration: BoxDecoration(
+                                  borderRadius: r,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.white.withValues(alpha: .38),
+                                      Colors.white.withValues(alpha: 0),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-              padding: widget.padding,
-              child: widget.child,
             ),
           ),
         ),
@@ -146,7 +242,10 @@ class RoundButton extends StatelessWidget {
       child: Center(
         child: Text(
           icon,
-          style: TextStyle(fontSize: size * .42, color: K.ink),
+          style: TextStyle(
+            fontSize: size * .42,
+            color: color.computeLuminance() > .8 ? K.ink : Colors.white,
+          ),
         ),
       ),
     ),
@@ -177,14 +276,14 @@ class PillButton extends StatelessWidget {
     onTap: onTap,
     color: color,
     base: base,
-    radius: 18,
+    radius: 22,
     depth: small ? 4 : 6,
-    padding: EdgeInsets.fromLTRB(18, small ? 8 : 12, 18, small ? 4 : 8),
+    padding: EdgeInsets.fromLTRB(20, small ? 9 : 13, 20, small ? 5 : 9),
     child: Text(
       text,
       textAlign: TextAlign.center,
       style: TextStyle(
-        fontSize: small ? 16 : 19,
+        fontSize: small ? 16 : 20,
         fontWeight: FontWeight.w800,
         color: fg,
       ),
@@ -200,22 +299,34 @@ class StarsPill extends StatelessWidget {
     final s = AppScope.of(context);
     return Semantics(
       label: '${s.stars} stars',
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 6, 16, 2),
-        decoration: BoxDecoration(
-          color: K.turmeric,
-          borderRadius: BorderRadius.circular(99),
-          boxShadow: const [
-            BoxShadow(color: K.turmericDeep, offset: Offset(0, 4)),
-          ],
-        ),
-        child: Text(
-          '⭐ ${s.stars}',
-          style: const TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
-            color: K.ink,
-            fontFeatures: [FontFeature.tabularFigures()],
+      child: TweenAnimationBuilder<double>(
+        // Re-keys on every new star, so the pill bounces when stars arrive.
+        key: ValueKey(s.stars),
+        tween: Tween(begin: 1.25, end: 1),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.elasticOut,
+        builder: (_, v, child) => Transform.scale(scale: v, child: child),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 6, 14, 2),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFD86B), K.turmeric],
+            ),
+            borderRadius: BorderRadius.circular(99),
+            boxShadow: const [
+              BoxShadow(color: K.turmericDeep, offset: Offset(0, 4)),
+            ],
+          ),
+          child: Text(
+            '⭐ ${s.stars}',
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              color: K.ink,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
           ),
         ),
       ),
@@ -223,7 +334,8 @@ class StarsPill extends StatelessWidget {
   }
 }
 
-/// Page frame: rangoli-dot ground, top bar with back button and stars.
+/// Page frame: sunny sky with clouds, a floating top bar with back button
+/// and stars, and an optional banner ad at the bottom.
 class KidPage extends StatelessWidget {
   const KidPage({
     super.key,
@@ -251,34 +363,47 @@ class KidPage extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           child: child,
         ),
       ),
     );
     return Scaffold(
-      backgroundColor: K.ivory,
+      backgroundColor: K.skyBottom,
       body: CustomPaint(
-        painter: const _DotsPainter(),
+        painter: const _SkyPainter(),
         child: SafeArea(
           child: Column(
             children: [
               Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 760),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                    padding: const EdgeInsets.fromLTRB(8, 8, 10, 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .82),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x1A2B2140),
+                          offset: Offset(0, 4),
+                          blurRadius: 14,
+                        ),
+                      ],
+                    ),
                     child: Row(
                       children: [
                         if (back) ...[
                           RoundButton(
                             '⬅️',
-                            size: 50,
+                            size: 46,
                             label: 'Back',
                             onTap: () => Navigator.of(context).maybePop(),
                           ),
-                          const SizedBox(width: 12),
-                        ],
+                          const SizedBox(width: 10),
+                        ] else
+                          const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,7 +413,7 @@ class KidPage extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 24,
+                                  fontSize: 23,
                                   fontWeight: FontWeight.w800,
                                   height: 1.2,
                                 ),
@@ -299,7 +424,7 @@ class KidPage extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 13.5,
+                                    fontSize: 13,
                                     color: K.inkSoft,
                                   ),
                                 ),
@@ -325,21 +450,141 @@ class KidPage extends StatelessWidget {
   }
 }
 
-class _DotsPainter extends CustomPainter {
-  const _DotsPainter();
+/// Sky gradient with soft clouds, a sun and faint floating Kannada letters.
+class _SkyPainter extends CustomPainter {
+  const _SkyPainter();
+
+  static const _floaters = ['ಅ', 'ಕ', 'ಆ', 'ಮ', 'ಇ', 'ನ', 'ಉ', 'ಗ'];
 
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = K.red.withValues(alpha: .10);
-    for (double y = 13; y < size.height; y += 26) {
-      for (double x = 13; x < size.width; x += 26) {
-        canvas.drawCircle(Offset(x, y), 1.7, p);
-      }
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [K.skyTop, K.skyMid, K.skyBottom],
+          stops: [0, .35, .8],
+        ).createShader(rect),
+    );
+    // sun
+    final sunC = Offset(size.width - 40, 40);
+    canvas.drawCircle(
+      sunC,
+      70,
+      Paint()..color = const Color(0xFFFFE27A).withValues(alpha: .35),
+    );
+    canvas.drawCircle(
+      sunC,
+      42,
+      Paint()..color = const Color(0xFFFFE27A).withValues(alpha: .7),
+    );
+    // clouds
+    final cloud = Paint()..color = Colors.white.withValues(alpha: .75);
+    void puff(double x, double y, double s) {
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(x, y), width: 90 * s, height: 34 * s),
+        cloud,
+      );
+      canvas.drawCircle(Offset(x - 16 * s, y - 10 * s), 20 * s, cloud);
+      canvas.drawCircle(Offset(x + 12 * s, y - 14 * s), 24 * s, cloud);
+    }
+
+    puff(size.width * .18, size.height * .16, 1);
+    puff(size.width * .78, size.height * .33, .8);
+    puff(size.width * .3, size.height * .55, .7);
+    puff(size.width * .85, size.height * .72, .9);
+    // faint letters
+    for (var i = 0; i < _floaters.length; i++) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: _floaters[i],
+          style: TextStyle(
+            fontFamily: 'BalooTamma2',
+            fontWeight: FontWeight.w800,
+            fontSize: 44 + (i % 3) * 14,
+            color: K.rainbow[i].$1.withValues(alpha: .10),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final x = (i * 0.37 % 1) * (size.width - 40);
+      final y = ((i * 0.23 + .12) % 1) * size.height;
+      tp.paint(canvas, Offset(x, y));
     }
   }
 
   @override
-  bool shouldRepaint(_DotsPainter oldDelegate) => false;
+  bool shouldRepaint(_SkyPainter oldDelegate) => false;
+}
+
+/// Pops a child in with a springy scale when it first appears.
+class PopIn extends StatelessWidget {
+  const PopIn({super.key, required this.child, this.delay = 0});
+  final Widget child;
+
+  /// 0–1 fraction of the animation to wait before starting (for staggering).
+  final double delay;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 550 + (delay * 400).round()),
+      builder: (_, t, c) {
+        final v = ((t - delay) / (1 - delay)).clamp(0.0, 1.0);
+        final s = .5 + .5 * Curves.elasticOut.transform(v);
+        return Opacity(
+          opacity: v.clamp(0.0, 1.0),
+          child: Transform.scale(scale: s, child: c),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+/// Gentle endless up-and-down bob (mascots, pictures).
+class Bob extends StatefulWidget {
+  const Bob({super.key, required this.child, this.height = 6, this.ms = 1400});
+  final Widget child;
+  final double height;
+  final int ms;
+
+  @override
+  State<Bob> createState() => _BobState();
+}
+
+class _BobState extends State<Bob> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: Duration(milliseconds: widget.ms),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) return widget.child;
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, child) => Transform.translate(
+        offset: Offset(
+          0,
+          -widget.height * Curves.easeInOut.transform(_c.value),
+        ),
+        child: child,
+      ),
+      child: widget.child,
+    );
+  }
 }
 
 class SectionTitle extends StatelessWidget {
@@ -348,30 +593,45 @@ class SectionTitle extends StatelessWidget {
   final String en;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 18, bottom: 10),
-    child: Wrap(
-      crossAxisAlignment: WrapCrossAlignment.end,
-      spacing: 8,
-      children: [
-        Text(
-          kn,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 3),
-          child: Text(
-            en.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 12.5,
-              color: K.inkSoft,
-              letterSpacing: .6,
+  Widget build(BuildContext context) {
+    final (c, deep) = K.tintFor(kn);
+    return Padding(
+      padding: const EdgeInsets.only(top: 20, bottom: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 2),
+            decoration: BoxDecoration(
+              color: c,
+              borderRadius: BorderRadius.circular(99),
+              boxShadow: [BoxShadow(color: deep, offset: const Offset(0, 3))],
+            ),
+            child: Text(
+              kn,
+              style: const TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              en.toUpperCase(),
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: K.inkSoft,
+                letterSpacing: .8,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Grid of square letter tiles.
@@ -386,7 +646,7 @@ class TileGrid extends StatelessWidget {
       final cols = math.max(3, (c.maxWidth / min).floor());
       return GridView.count(
         crossAxisCount: cols,
-        mainAxisSpacing: 10,
+        mainAxisSpacing: 12,
         crossAxisSpacing: 12,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -400,7 +660,7 @@ class LetterTile extends StatelessWidget {
   const LetterTile(
     this.ch, {
     super.key,
-    required this.color,
+    this.color,
     required this.onTap,
     this.done = false,
     this.caption,
@@ -408,58 +668,72 @@ class LetterTile extends StatelessWidget {
   });
 
   final String ch;
-  final Color color;
+
+  /// Kept for call sites; tiles now use a stable rainbow colour per letter.
+  final Color? color;
   final VoidCallback onTap;
   final bool done;
   final String? caption;
   final String? label;
 
   @override
-  Widget build(BuildContext context) => Toy(
-    onTap: onTap,
-    radius: 18,
-    depth: 5,
-    semanticLabel: label ?? ch,
-    child: Stack(
-      children: [
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: FittedBox(
-              child: Text(
-                ch,
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w800,
-                  color: color,
+  Widget build(BuildContext context) {
+    final (c, deep) = K.tintFor(ch);
+    return PopIn(
+      delay: (ch.runes.first % 7) / 20,
+      child: Toy(
+        onTap: onTap,
+        color: K.pastel(c, .18),
+        base: K.pastel(deep, .55),
+        radius: 22,
+        depth: 5,
+        semanticLabel: label ?? ch,
+        child: Stack(
+          children: [
+            Center(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: 6,
+                  bottom: caption == null ? 0 : 10,
+                ),
+                child: FittedBox(
+                  child: Text(
+                    ch,
+                    style: TextStyle(
+                      fontSize: 38,
+                      fontWeight: FontWeight.w800,
+                      color: deep,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+            if (done)
+              const Positioned(
+                top: 3,
+                right: 6,
+                child: Text('⭐', style: TextStyle(fontSize: 13)),
+              ),
+            if (caption != null)
+              Positioned(
+                bottom: 4,
+                left: 0,
+                right: 0,
+                child: Text(
+                  caption!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: deep,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+          ],
         ),
-        if (done)
-          const Positioned(
-            top: 4,
-            right: 7,
-            child: Text(
-              '★',
-              style: TextStyle(color: K.turmericDeep, fontSize: 14),
-            ),
-          ),
-        if (caption != null)
-          Positioned(
-            bottom: 3,
-            left: 0,
-            right: 0,
-            child: Text(
-              caption!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11, color: K.inkSoft),
-            ),
-          ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 void toast(BuildContext context, String msg) {

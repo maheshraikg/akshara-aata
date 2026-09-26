@@ -119,11 +119,17 @@ void main() {
     tester.view.physicalSize = const Size(412 * 3, 900 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
+    // The mascot and pictures bob forever; tests run with reduced motion.
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     final state = await freshState();
     state.update((s) => s.sfx = false);
     await tester.pumpWidget(AksharaAata(state: state));
     expect(find.text('ಅಕ್ಷರ ಆಟ'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('ಸ್ವರಗಳು'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('ಸ್ವರಗಳು'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ಆ').first);
@@ -137,9 +143,15 @@ void main() {
     tester.view.physicalSize = const Size(412 * 3, 900 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
+    // The mascot and pictures bob forever; tests run with reduced motion.
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     final state = await freshState();
     state.update((s) => s.sfx = false);
     await tester.pumpWidget(AksharaAata(state: state));
+    await tester.ensureVisible(find.text('ಆಟಗಳು'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('ಆಟಗಳು'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ಎಣಿಸು'));

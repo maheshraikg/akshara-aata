@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../audio.dart';
@@ -165,8 +167,9 @@ class _LetterCardScreenState extends State<LetterCardScreen>
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final color = K.of(item.color);
+    final (color, deep) = K.tintFor(item.ch);
     final isNum = item.count != null;
+    final bubble = math.min(230.0, MediaQuery.of(context).size.width * .6);
     return KidPage(
       title: '${widget.index + 1} / ${widget.items.length}',
       sub: item.label,
@@ -178,11 +181,23 @@ class _LetterCardScreenState extends State<LetterCardScreen>
         },
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
           decoration: BoxDecoration(
-            color: K.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: const [BoxShadow(color: K.shade, offset: Offset(0, 6))],
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [K.pastel(color, .32), Colors.white],
+            ),
+            borderRadius: BorderRadius.circular(34),
+            border: Border.all(color: Colors.white, width: 4),
+            boxShadow: [
+              BoxShadow(color: K.pastel(deep, .6), offset: const Offset(0, 7)),
+              const BoxShadow(
+                color: Color(0x1F2B2140),
+                offset: Offset(0, 14),
+                blurRadius: 18,
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -202,30 +217,54 @@ class _LetterCardScreenState extends State<LetterCardScreen>
                           : .96 + (t - .6) / .4 * .04;
                       return Transform.scale(scale: scale, child: child);
                     },
-                    child: Text(
-                      item.ch,
-                      style: TextStyle(
-                        fontSize: 150,
-                        fontWeight: FontWeight.w800,
-                        height: 1.25,
-                        color: color,
-                        shadows: const [
-                          Shadow(
-                            color: Color(0x1F2A1D14),
-                            offset: Offset(0, 6),
+                    child: Container(
+                      width: bubble,
+                      height: bubble,
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.only(top: bubble * .09),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          center: const Alignment(-.35, -.4),
+                          radius: .9,
+                          colors: [K.lighten(color, .12), color, deep],
+                          stops: const [0, .6, 1],
+                        ),
+                        border: Border.all(color: Colors.white, width: 6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: deep.withValues(alpha: .45),
+                            offset: const Offset(0, 10),
+                            blurRadius: 18,
                           ),
                         ],
+                      ),
+                      child: FittedBox(
+                        child: Text(
+                          item.ch,
+                          style: TextStyle(
+                            fontSize: bubble * .55,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(color: deep, offset: const Offset(0, 5)),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+              const SizedBox(height: 10),
               if (s.roman && !isNum)
                 Text(
                   '“${item.sayRoman}”',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: K.inkSoft,
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: deep,
+                    fontWeight: FontWeight.w800,
                     letterSpacing: .6,
                   ),
                 ),
@@ -243,17 +282,22 @@ class _LetterCardScreenState extends State<LetterCardScreen>
                 ),
               Toy(
                 onTap: _sayWord,
-                color: K.paper,
-                base: Colors.transparent,
-                depth: 0,
-                radius: 20,
+                color: Colors.white,
+                base: K.pastel(deep, .35),
+                depth: 5,
+                radius: 26,
                 padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
                 semanticLabel: '${item.wordTr} ${item.en ?? ''}',
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (item.emoji != null) ...[
-                      Text(item.emoji!, style: const TextStyle(fontSize: 52)),
+                      Bob(
+                        child: Text(
+                          item.emoji!,
+                          style: const TextStyle(fontSize: 56),
+                        ),
+                      ),
                       const SizedBox(width: 14),
                     ],
                     Flexible(
@@ -313,8 +357,8 @@ class _LetterCardScreenState extends State<LetterCardScreen>
                   RoundButton(
                     '✏️',
                     label: 'Trace this letter',
-                    color: K.turmeric,
-                    base: K.turmericDeep,
+                    color: K.orange,
+                    base: K.orangeDeep,
                     onTap: () => push(
                       context,
                       TraceScreen(items: widget.items, index: widget.index),

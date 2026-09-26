@@ -400,10 +400,20 @@ class _QuizScreenState extends State<QuizScreen> {
             padding: const EdgeInsets.all(16),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: K.white,
-              borderRadius: BorderRadius.circular(28),
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFFFBEF), Colors.white],
+              ),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white, width: 4),
               boxShadow: const [
-                BoxShadow(color: K.shade, offset: Offset(0, 6)),
+                BoxShadow(color: Color(0xFFE8D9B8), offset: Offset(0, 7)),
+                BoxShadow(
+                  color: Color(0x1F2B2140),
+                  offset: Offset(0, 14),
+                  blurRadius: 18,
+                ),
               ],
             ),
             child: _r.prompt(context, () => _r.say?.call()),
@@ -419,6 +429,7 @@ class _QuizScreenState extends State<QuizScreen> {
             children: [
               for (var i = 0; i < _r.options.length; i++)
                 _Choice(
+                  index: i,
                   label: _r.options[i].$1,
                   state: i == _right
                       ? _ChoiceState.right
@@ -439,22 +450,36 @@ enum _ChoiceState { idle, right, wrong }
 
 class _Choice extends StatelessWidget {
   const _Choice({
+    required this.index,
     required this.label,
     required this.state,
     required this.onTap,
   });
+  final int index;
   final String label;
   final _ChoiceState state;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    // Candy colours per slot; right turns green, wrong fades out.
+    const slots = [
+      (K.blue, K.blueDeep),
+      (K.orange, K.orangeDeep),
+      (K.plum, K.plumDeep),
+      (K.pink, K.pinkDeep),
+    ];
+    final (c, d) = slots[index % slots.length];
     final (bg, base, fg) = switch (state) {
       _ChoiceState.right => (K.green, K.greenDeep, K.white),
-      _ChoiceState.wrong => (K.paper, Colors.transparent, K.inkSoft),
-      _ChoiceState.idle => (K.white, K.shade, K.ink),
+      _ChoiceState.wrong => (
+        const Color(0xFFE9E4F0),
+        const Color(0xFFCFC7DB),
+        const Color(0xFFA79DB8),
+      ),
+      _ChoiceState.idle => (c, d, K.white),
     };
-    return Toy(
+    final button = Toy(
       onTap: onTap,
       sound: false,
       color: bg,
@@ -468,14 +493,28 @@ class _Choice extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 50,
+                fontSize: 52,
                 fontWeight: FontWeight.w800,
                 color: fg,
+                shadows: state == _ChoiceState.wrong
+                    ? null
+                    : [Shadow(color: base, offset: const Offset(0, 3))],
               ),
             ),
           ),
         ),
       ),
+    );
+    if (state != _ChoiceState.right) {
+      return PopIn(delay: index * .1, child: button);
+    }
+    // A right answer bounces.
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 1.25, end: 1),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.elasticOut,
+      builder: (_, v, child) => Transform.scale(scale: v, child: child),
+      child: button,
     );
   }
 }

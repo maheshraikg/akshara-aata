@@ -100,11 +100,13 @@ For every update, raise the number after `+` in `pubspec.yaml` (`version: 1.0.1+
 
 ## Built-in sounds
 
-`assets/audio/` holds one small `.ogg` file for everything the app says. The file name is the text's Unicode code points (ಕಾ → `c95_cbe.ogg`), and `assets/audio/recording-list.csv` lists every file with its Kannada text.
+`assets/audio/` holds one small `.ogg` file for everything the app says (586 in all). The file name is the text's Unicode code points (ಕಾ → `c95_cbe.ogg`), and `assets/audio/recording-list.csv` lists every file with its Kannada text.
 
-The current files were made with the open-source espeak-ng Kannada voice by `dart run tool/generate_audio.dart` (needs `espeak-ng` and `ffmpeg`). The pronunciation is correct but the voice sounds robotic.
+**Voice:** a natural neural Kannada voice, [AI4Bharat Indic-TTS](https://github.com/AI4Bharat/Indic-TTS) (FastPitch + HiFi-GAN, MIT license). It was trained on studio recordings of native Kannada speakers (IIT Madras IndicTTS data). The files are made by `tool/generate_voice.py`, and its header explains the one-time setup. Single letters are slowed slightly (pitch unchanged) so small children hear them clearly.
 
-**For a friendlier human voice:** have a clear Kannada speaker record the lines in `recording-list.csv`. Save each as `.ogg` with the exact file name from the list and copy it over the old one. Any file you don't replace keeps the generated voice. The generator only writes files that are missing, unless you pass `--all`. To convert a phone recording: `ffmpeg -i ka.m4a -ac 1 -ar 22050 -c:a libvorbis -q:a 4 c95.ogg`.
+To add a new word: add it to `lib/data.dart`, run `dart run tool/generate_audio.dart` to update `recording-list.csv`, then run `generate_voice.py`. The Dart tool uses espeak-ng only as a quick placeholder.
+
+**Human recordings:** any file can still be replaced with a recording of a real speaker. Use the same file name, and convert it with `ffmpeg -i ka.m4a -ac 1 -ar 22050 -c:a libvorbis -q:a 4 c95.ogg`.
 
 ## Content fixes
 

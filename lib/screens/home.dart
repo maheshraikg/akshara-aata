@@ -26,34 +26,10 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 18, top: 2),
-            child: Row(
-              children: [
-                _Mascot(),
-                SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ನಮಸ್ಕಾರ!',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          height: 1.1,
-                        ),
-                      ),
-                      Text(
-                        'ಬಾ, ಕನ್ನಡ ಅಕ್ಷರ ಕಲಿಯೋಣ. Let’s learn Kannada letters.',
-                        style: TextStyle(fontSize: 16, color: K.inkSoft),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const _Hero(),
+          const SizedBox(height: 14),
+          const _LetterOfTheDay(),
+          const SizedBox(height: 16),
           _BlockGrid(
             children: [
               HomeBlock(
@@ -84,25 +60,24 @@ class HomeScreen extends StatelessWidget {
                 glyph: '೩',
                 title: 'ಅಂಕಿಗಳು',
                 sub: 'Numbers ೦–೧೦',
-                color: K.green,
-                base: K.greenDeep,
+                color: K.teal,
+                base: K.tealDeep,
                 onTap: () => push(context, const NumbersScreen()),
               ),
               HomeBlock(
                 glyph: '✏️',
                 title: 'ಬರೆಯೋಣ',
                 sub: 'Trace & write',
-                color: K.turmeric,
-                base: K.turmericDeep,
-                fg: K.ink,
+                color: K.orange,
+                base: K.orangeDeep,
                 onTap: () => push(context, const TraceMenuScreen()),
               ),
               HomeBlock(
                 glyph: '🎈',
                 title: 'ಆಟಗಳು',
                 sub: '7 fun games',
-                color: K.red,
-                base: K.redDeep,
+                color: K.pink,
+                base: K.pinkDeep,
                 onTap: () => push(context, const GamesScreen()),
               ),
             ],
@@ -331,6 +306,154 @@ class _MascotState extends State<_Mascot> with SingleTickerProviderStateMixin {
         ),
       ),
       child: const Text('🐘', style: TextStyle(fontSize: 58)),
+    );
+  }
+}
+
+/// Sunny welcome card with the elephant mascot and a speech bubble.
+class _Hero extends StatelessWidget {
+  const _Hero();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(12, 14, 16, 14),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFFFF8FB1), Color(0xFFFFB86B)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(28),
+      boxShadow: const [
+        BoxShadow(color: Color(0xFFE06C8E), offset: Offset(0, 6)),
+        BoxShadow(
+          color: Color(0x262B2140),
+          offset: Offset(0, 12),
+          blurRadius: 16,
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        const Bob(
+          height: 8,
+          child: Text('🐘', style: TextStyle(fontSize: 70, height: 1.1)),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ನಮಸ್ಕಾರ! 👋',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                    color: K.redDeep,
+                  ),
+                ),
+                Text(
+                  'ಬಾ, ಕನ್ನಡ ಅಕ್ಷರ ಕಲಿಯೋಣ!',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: K.ink,
+                  ),
+                ),
+                Text(
+                  "Let's learn Kannada letters",
+                  style: TextStyle(fontSize: 14, color: K.inkSoft),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// A different letter every day, one tap from its card.
+class _LetterOfTheDay extends StatelessWidget {
+  const _LetterOfTheDay();
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final day = now.difference(DateTime(now.year)).inDays;
+    final cards = [...vowelCards, ...consonantCards];
+    final i = day % cards.length;
+    final item = cards[i];
+    final (c, deep) = K.tintFor(item.ch);
+    return Toy(
+      onTap: () => push(context, LetterCardScreen(items: cards, index: i)),
+      color: Colors.white,
+      base: K.pastel(deep, .5),
+      radius: 26,
+      semanticLabel: 'Letter of the day, ${item.sayRoman}',
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+      child: Row(
+        children: [
+          Container(
+            width: 74,
+            height: 74,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: c,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Text(
+              item.ch,
+              style: const TextStyle(
+                fontSize: 44,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ಇಂದಿನ ಅಕ್ಷರ · LETTER OF THE DAY',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: .6,
+                    color: deep,
+                  ),
+                ),
+                Text(
+                  item.word,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+                if (item.en != null)
+                  Text(
+                    item.en!,
+                    style: const TextStyle(fontSize: 14, color: K.inkSoft),
+                  ),
+              ],
+            ),
+          ),
+          Bob(
+            child: Text(item.emoji ?? '', style: const TextStyle(fontSize: 48)),
+          ),
+        ],
+      ),
     );
   }
 }
