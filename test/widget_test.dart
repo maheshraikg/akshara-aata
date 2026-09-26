@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:akshara_aata/audio.dart';
 import 'package:akshara_aata/data.dart';
 import 'package:akshara_aata/main.dart';
 import 'package:akshara_aata/screens/trace.dart';
+import 'package:akshara_aata/writing_guide.dart';
 import 'package:akshara_aata/state.dart';
 import 'package:akshara_aata/widgets.dart';
 import 'package:flutter/material.dart';
@@ -71,13 +73,20 @@ void main() {
     }
   });
 
-  test('every letter has a stroke-order writing animation', () {
+  test('every letter has stroke-order writing data', () {
+    final strokes = jsonDecode(
+      File('assets/writing/strokes.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
     for (final l in letters) {
-      final asset = writingGuideFor(l.ch);
-      expect(asset, isNotNull, reason: l.ch);
-      expect(File(asset!).existsSync(), isTrue, reason: '${l.ch} has no guide');
+      expect(WritingData.has(l.ch), isTrue, reason: l.ch);
+      expect(strokes[l.ch], isNotNull, reason: '${l.ch} has no pen path');
+      expect(
+        File('assets/writing/${audioKey(l.ch)}.png').existsSync(),
+        isTrue,
+        reason: '${l.ch} has no time map',
+      );
     }
-    expect(writingGuideFor('೧'), isNull);
+    expect(WritingData.has('೧'), isFalse);
   });
 
   test('Kannada maps onto Devanagari for the Hindi voice fallback', () {

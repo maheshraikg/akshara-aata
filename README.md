@@ -123,7 +123,9 @@ To add a new word: add it to `lib/data.dart`, run `dart run tool/generate_audio.
 
 ## Writing guides
 
-`assets/writing/` holds a stroke-by-stroke writing animation for each of the 49 letters: a pencil writes the letter in the right order. They are by Gopala Krishna A, from the Commons category [Animations of Kannada letters](https://commons.wikimedia.org/wiki/Category:Animations_of_Kannada_letters), licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The converted WebP files (white background, 280 px, last frame held 1.5 s) are under the same licence. The tracing screen shows the animation the first time a child writes a letter, and again with "▶ ನೋಡು · Watch how". To rebuild them: `pip install pillow`, then `python3 tool/import_writing.py commons/` on the unpacked `commons-kannada-writing.tgz`.
+The tracing screen shows how each of the 49 letters is written: a crayon writes the letter in rainbow ink, stroke by stroke, over a faint copy of it, then stars pop up and the letter is spoken. It opens the first time a child writes a letter, and again with "▶ ನೋಡು · Watch how". The animation is the app's own (`lib/writing_guide.dart`).
+
+The stroke order comes from the writing animations by Gopala Krishna A in the Commons category [Animations of Kannada letters](https://commons.wikimedia.org/wiki/Category:Animations_of_Kannada_letters) ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)). `tool/make_writing_paths.py` finds when the pencil lays down each ink pixel and writes `assets/writing/<key>.png` (grey = when the pixel is drawn, alpha = ink) and `assets/writing/strokes.json` (the pen's path). These files are adapted from those animations and share their licence. To rebuild them: `pip install pillow numpy`, then `python3 tool/make_writing_paths.py commons/` on the unpacked `commons-kannada-writing.tgz`.
 
 ## Content fixes
 

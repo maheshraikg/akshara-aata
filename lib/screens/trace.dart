@@ -9,6 +9,7 @@ import '../data.dart';
 import '../main.dart';
 import '../state.dart';
 import '../widgets.dart';
+import '../writing_guide.dart';
 import 'learn.dart';
 
 class TraceMenuScreen extends StatelessWidget {
@@ -47,15 +48,9 @@ class TraceMenuScreen extends StatelessWidget {
   }
 }
 
-/// Stroke-by-stroke writing animation for one of the 49 letters, if any.
-String? writingGuideFor(String ch) => letters.any((l) => l.ch == ch)
-    ? 'assets/writing/${audioKey(ch)}.webp'
-    : null;
-
-/// Shows a pencil writing [ch] in the right stroke order.
+/// Shows a crayon writing [ch] in the right stroke order.
 Future<void> showWritingGuide(BuildContext context, String ch) {
-  final asset = writingGuideFor(ch);
-  if (asset == null) return Future.value();
+  if (!WritingData.has(ch)) return Future.value();
   return showDialog<void>(
     context: context,
     builder: (context) => Dialog(
@@ -71,15 +66,9 @@ Future<void> showWritingGuide(BuildContext context, String ch) {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 280, maxHeight: 280),
-              child: Image.asset(
-                asset,
-                gaplessPlayback: true,
-                semanticLabel: 'How to write $ch',
-                errorBuilder: (_, _, _) =>
-                    Text(ch, style: const TextStyle(fontSize: 120)),
-              ),
+            LayoutBuilder(
+              builder: (context, c) =>
+                  WritingGuide(ch, size: math.min(c.maxWidth, 300)),
             ),
             const SizedBox(height: 14),
             PillButton(
@@ -389,7 +378,7 @@ class _TraceScreenState extends State<TraceScreen>
               ),
             ],
           ),
-          if (writingGuideFor(item.ch) != null ||
+          if (WritingData.has(item.ch) ||
               AppScope.of(context).demos.containsKey(item.ch) ||
               AppScope.of(context).teacherMode) ...[
             const SizedBox(height: 14),
@@ -398,7 +387,7 @@ class _TraceScreenState extends State<TraceScreen>
               runSpacing: 10,
               alignment: WrapAlignment.center,
               children: [
-                if (writingGuideFor(item.ch) != null)
+                if (WritingData.has(item.ch))
                   PillButton(
                     '▶ ನೋಡು · Watch how',
                     small: true,
