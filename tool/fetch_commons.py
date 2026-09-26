@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -14,11 +15,30 @@ API = 'https://commons.wikimedia.org/w/api.php'
 UA = {'User-Agent': 'AksharaAata/1.0 (Kannada learning app; build script)'}
 
 
+def fetch(url):
+    # Wikimedia rate-limits bursts (HTTP 429): go slowly and back off.
+    for attempt in range(8):
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            with urllib.request.urlopen(req, timeout=60) as r:
+                data = r.read()
+            time.sleep(0.4)
+            return data
+        except urllib.error.HTTPError as e:
+            if e.code != 429 and e.code < 500:
+                raise
+            wait = int(e.headers.get('Retry-After') or 0) or 5 * (attempt + 1)
+            print('waiting', wait, 's after', e.code, flush=True)
+            time.sleep(min(wait, 120))
+        except Exception as e:  # noqa: BLE001
+            print('retry', e, flush=True)
+            time.sleep(5)
+    raise RuntimeError('gave up on ' + url)
+
+
 def api(params):
     params = {**params, 'format': 'json', 'formatversion': '2'}
-    req = urllib.request.Request(API + '?' + urllib.parse.urlencode(params), headers=UA)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.load(r)
+    return json.loads(fetch(API + '?' + urllib.parse.urlencode(params)))
 
 
 def members(cat):
@@ -61,15 +81,13 @@ for n, (t, m) in enumerate(meta.items()):
     name = t.removeprefix('File:')
     path = os.path.join('commons', name)
     if not os.path.exists(path):
-        for attempt in range(3):
-            try:
-                req = urllib.request.Request(m['url'], headers=UA)
-                with urllib.request.urlopen(req, timeout=60) as r, open(path, 'wb') as f:
-                    f.write(r.read())
-                break
-            except Exception as e:  # noqa: BLE001
-                print('retry', name, e, flush=True)
-                time.sleep(3)
+        try:
+            data = fetch(m['url'])
+        except Exception as e:  # noqa: BLE001
+            print('skipped', name, e, flush=True)
+            continue
+        with open(path, 'wb') as f:
+            f.write(data)
     m['file'] = name
     if n % 100 == 0:
         print(n, '/', len(meta), flush=True)
