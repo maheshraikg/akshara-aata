@@ -12,7 +12,9 @@ import urllib.parse
 import urllib.request
 
 API = 'https://commons.wikimedia.org/w/api.php'
-UA = {'User-Agent': 'AksharaAata/1.0 (Kannada learning app; build script)'}
+# Wikimedia throttles requests without a contact URL in the User-Agent.
+UA = {'User-Agent': 'AksharaAata/1.0 (https://github.com/maheshraikg/Pdf_Tools; '
+                    'Kannada learning app build script) python-urllib'}
 
 
 def fetch(url):
@@ -28,8 +30,8 @@ def fetch(url):
             if e.code != 429 and e.code < 500:
                 raise
             wait = int(e.headers.get('Retry-After') or 0) or 5 * (attempt + 1)
-            print('waiting', wait, 's after', e.code, flush=True)
-            time.sleep(min(wait, 120))
+            print('waiting', wait, 's after', e.code, url, flush=True)
+            time.sleep(min(wait, 60))
         except Exception as e:  # noqa: BLE001
             print('retry', e, flush=True)
             time.sleep(5)
@@ -89,7 +91,6 @@ for n, (t, m) in enumerate(meta.items()):
         with open(path, 'wb') as f:
             f.write(data)
     m['file'] = name
-    if n % 100 == 0:
-        print(n, '/', len(meta), flush=True)
+    print(n + 1, '/', len(meta), name, flush=True)
 json.dump(meta, open('commons/meta.json', 'w'), ensure_ascii=False, indent=1)
 print('done', len(meta))
