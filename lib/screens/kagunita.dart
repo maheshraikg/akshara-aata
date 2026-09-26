@@ -7,6 +7,7 @@ import '../data.dart';
 import '../main.dart';
 import '../state.dart';
 import '../widgets.dart';
+import 'trace.dart';
 
 /// Consonant × 15 vowel signs (ಕ ಕಾ ಕಿ … ಕಃ).
 class KagunitaScreen extends StatefulWidget {
@@ -123,7 +124,23 @@ class _KagunitaScreenState extends State<KagunitaScreen> {
           ),
           const SizedBox(height: 18),
           Center(
-            child: PillButton('🔊 ಎಲ್ಲವನ್ನೂ ಕೇಳು · Hear all', onTap: _hearAll),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                PillButton('🔊 ಎಲ್ಲವನ್ನೂ ಕೇಳು · Hear all', onTap: _hearAll),
+                PillButton(
+                  '✏️ ಬರೆ · Write',
+                  color: K.plum,
+                  base: K.plumDeep,
+                  onTap: () => push(
+                    context,
+                    TraceScreen(items: kagunitaCards(widget.base), index: 0),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

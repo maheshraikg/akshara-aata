@@ -89,6 +89,27 @@ void main() {
     expect(WritingData.has('೧'), isFalse);
   });
 
+  test('every kagunita form has stroke-order writing data', () {
+    final paths = jsonDecode(
+      File('assets/writing/kagunita.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+    for (final b in byGroup(Group.vyanjana)) {
+      final cards = kagunitaCards(b);
+      expect(cards.length, 15);
+      for (final k in cards.skip(1)) {
+        expect(WritingData.has(k.ch), isTrue, reason: k.ch);
+        expect(paths[k.ch], isNotNull, reason: '${k.ch} has no pen path');
+        expect(
+          File('assets/writing/${audioKey(k.ch)}.png').existsSync(),
+          isTrue,
+          reason: '${k.ch} has no time map',
+        );
+      }
+    }
+    expect(sayingOf('ಕಾ'), ('ಕಾ', 'kaa'));
+    expect(kagunitaParts('ಅಾ'), isNull);
+  });
+
   test('Kannada maps onto Devanagari for the Hindi voice fallback', () {
     expect(Audio.toDevanagari('ಕ'), 'क');
     expect(Audio.toDevanagari('ಆನೆ'), 'आने');

@@ -99,6 +99,17 @@ class CardItem {
     },
   );
 
+  /// A kagunita form, like ಕಾ (ಕ + ಾ).
+  factory CardItem.kagunita(Letter base, VowelSign s) => CardItem(
+    ch: base.ch + s.sign,
+    say: base.ch + s.sign,
+    sayRoman: rootOf(base) + s.tr,
+    word: base.word,
+    wordTr: base.wordTr,
+    label: 'ಕಾಗುಣಿತ · ${base.ch} + ${s.vowel}',
+    color: CardColor.blue,
+  );
+
   factory CardItem.number(KNumber n) => CardItem(
     ch: n.ch,
     say: n.word,
@@ -469,6 +480,33 @@ List<Letter> byGroup(Group g) => letters.where((l) => l.group == g).toList();
 
 /// Consonant root without the inherent "a" (ka → k).
 String rootOf(Letter l) => l.tr.substring(0, l.tr.length - 1);
+
+/// The consonant and vowel sign of a kagunita form like ಕಾ, or null.
+(Letter, VowelSign)? kagunitaParts(String text) {
+  if (text.length != 2) return null;
+  for (final l in byGroup(Group.vyanjana)) {
+    if (l.ch != text[0]) continue;
+    for (final s in signs.skip(1)) {
+      if (s.sign == text[1]) return (l, s);
+    }
+  }
+  return null;
+}
+
+/// A consonant and its 14 kagunita forms, for tracing.
+List<CardItem> kagunitaCards(Letter base) => [
+  CardItem.letter(base),
+  for (final s in signs.skip(1)) CardItem.kagunita(base, s),
+];
+
+/// How [text] (a letter or kagunita form) is spoken: Kannada and roman.
+(String, String)? sayingOf(String text) {
+  for (final l in letters) {
+    if (l.ch == text) return (l.ch, l.tr);
+  }
+  final k = kagunitaParts(text);
+  return k == null ? null : (text, rootOf(k.$1) + k.$2.tr);
+}
 
 /// Praise the result screen says aloud.
 const spokenPraise = [('ಶಭಾಷ್', 'shabash'), ('ಚೆನ್ನಾಗಿದೆ', 'chennagide')];

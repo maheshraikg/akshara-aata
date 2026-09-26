@@ -127,6 +127,8 @@ The tracing screen shows how each of the 49 letters is written: a crayon writes 
 
 The stroke order comes from the writing animations by Gopala Krishna A in the Commons category [Animations of Kannada letters](https://commons.wikimedia.org/wiki/Category:Animations_of_Kannada_letters) ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)). `tool/make_writing_paths.py` finds when the pencil lays down each ink pixel and writes `assets/writing/<key>.png` (grey = when the pixel is drawn, alpha = ink) and `assets/writing/strokes.json` (the pen's path). These files are adapted from those animations and share their licence. To rebuild them: `pip install pillow numpy`, then `python3 tool/make_writing_paths.py commons/` on the unpacked `commons-kannada-writing.tgz`.
 
+**Kagunita** (34 consonants × 14 vowel signs, ಕಾ … ಳಃ) have the same writing guide, drawn in the app's font. `tool/make_kagunita_paths.py` fits the consonant's real stroke order onto the font's letter, then adds the vowel sign afterwards: parts that touch the consonant first, then the others from left to right, each traced along its centre line from the end nearest the consonant (or its top-left end). The sign's order is worked out by these rules, not taken from a recording. Children can trace kagunita from the kagunita screen ("✏️ ಬರೆ · Write") or the Kagunita section of the writing menu. To rebuild: `pip install pillow numpy scipy scikit-image`, then `python3 tool/make_kagunita_paths.py`.
+
 ## Content fixes
 
 Each letter is one line in `lib/data.dart`:

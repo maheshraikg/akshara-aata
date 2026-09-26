@@ -40,6 +40,24 @@ class TraceMenuScreen extends StatelessWidget {
           TileGrid(children: tiles(v)),
           const SectionTitle('ವ್ಯಂಜನಗಳು', 'Consonants'),
           TileGrid(children: tiles(c)),
+          const SectionTitle('ಕಾಗುಣಿತ', 'Kagunita: letter + vowel sign'),
+          TileGrid(
+            children: [
+              for (final b in byGroup(Group.vyanjana))
+                LetterTile(
+                  '${b.ch}ಾ',
+                  color: K.of(CardColor.blue),
+                  done: kagunitaCards(b)
+                      .skip(1)
+                      .every((k) => s.traced.contains(k.ch)),
+                  label: '${b.tr} kagunita',
+                  onTap: () => push(
+                    context,
+                    TraceScreen(items: kagunitaCards(b), index: 1),
+                  ),
+                ),
+            ],
+          ),
           const SectionTitle('ಅಂಕಿಗಳು', 'Numbers'),
           TileGrid(children: tiles(n)),
         ],

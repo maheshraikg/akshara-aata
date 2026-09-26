@@ -27,10 +27,12 @@ class WritingData {
   /// Pen position over time: (t in 0–1, x, y in 0–1).
   final List<(double, double, double)> head;
 
-  static Map<String, dynamic>? _json;
+  /// Pen paths: letters (strokes.json) and kagunita (kagunita.json).
+  static final Map<String, Map<String, dynamic>> _json = {};
   static final Map<String, Future<WritingData?>> _cache = {};
 
-  static bool has(String ch) => letters.any((l) => l.ch == ch);
+  static bool has(String ch) =>
+      letters.any((l) => l.ch == ch) || kagunitaParts(ch) != null;
 
   static Future<WritingData?> load(String ch) =>
       _cache[ch] ??= _load(ch).catchError((Object _) => null);
@@ -49,10 +51,11 @@ class WritingData {
 
   static Future<WritingData?> _load(String ch) async {
     if (!has(ch)) return null;
-    _json ??= jsonDecode(
-      await rootBundle.loadString('assets/writing/strokes.json'),
+    final file = kagunitaParts(ch) != null ? 'kagunita' : 'strokes';
+    final paths = _json[file] ??= jsonDecode(
+      await rootBundle.loadString('assets/writing/$file.json'),
     ) as Map<String, dynamic>;
-    final info = _json![ch] as Map<String, dynamic>?;
+    final info = paths[ch] as Map<String, dynamic>?;
     if (info == null) return null;
     final bytes = await rootBundle.load('assets/writing/${audioKey(ch)}.png');
     final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
@@ -164,8 +167,8 @@ class _WritingGuideState extends State<WritingGuide>
     if (done && !_said) {
       _said = true;
       if (widget.speak) {
-        final l = letters.firstWhere((l) => l.ch == widget.ch);
-        Audio.instance.speak(l.ch, l.tr);
+        final say = sayingOf(widget.ch);
+        if (say != null) Audio.instance.speak(say.$1, say.$2);
       }
     } else if (!done) {
       _said = false;

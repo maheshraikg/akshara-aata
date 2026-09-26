@@ -211,7 +211,7 @@ class _ParentsScreenState extends State<ParentsScreen> {
             children: [
               _H('Report · ${s.child.name}'),
               Text(
-                '${s.seen.length} / 49 letters explored · ${s.traced.length} / 49 written · ${s.stars} stars · ${s.streak}-day streak',
+                '${s.seen.length} / 49 letters explored · ${letters.where((l) => s.traced.contains(l.ch)).length} / 49 written · ${s.stars} stars · ${s.streak}-day streak',
                 style: const TextStyle(color: K.inkSoft, fontSize: 15),
               ),
               const _Legend(),
