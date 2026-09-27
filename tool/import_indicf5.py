@@ -14,6 +14,15 @@ import sys
 
 CONSONANTS = 'ಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಲವಶಷಸಹಳ'
 SIGNS = ['ಾ', 'ಿ', 'ೀ', 'ು', 'ೂ', 'ೃ', 'ೆ', 'ೇ', 'ೈ', 'ೊ', 'ೋ', 'ೌ', 'ಂ', 'ಃ']
+# The recogniser often hears a long vowel as short (ಕೀ as ಕಿ); listening
+# showed those takes are right, so they count too.
+SHORT = {'ೀ': 'ಿ', 'ೂ': 'ು', 'ೇ': 'ೆ', 'ೋ': 'ೊ', 'ಾ': ''}
+
+
+def good(t, heard):
+    return heard == t or (t[-1] in SHORT and heard == t[:-1] + SHORT[t[-1]])
+
+
 # Whole-syllable native recordings (Lingua Libre) stay.
 RECORDED = {'ಗೆ', 'ದಿ', 'ಮೇ', 'ಹೇ', 'ಹೂ'}
 
@@ -27,11 +36,14 @@ ok = {}
 for f in glob.glob(os.path.join(src, '**', 'report-*.json'), recursive=True):
     r = json.load(open(f, encoding='utf-8'))
     for t, v in r['items'].items():
-        if not v['ok'] or not v['takes'] or 'seed' not in v['takes'][0]:
+        if t in ok or not v['takes'] or 'seed' not in v['takes'][0]:
             continue
-        wav = os.path.join(os.path.dirname(f), f'{key(t)}.wav')
-        if os.path.exists(wav):
-            ok[t] = wav
+        # Exact matches first, then long vowels heard as short.
+        for x in sorted(v['takes'], key=lambda x: (x['heard'] != t, x['n'])):
+            wav = os.path.join(os.path.dirname(f), 'takes', f"{key(t)}_{x['n']}.wav")
+            if good(t, x['heard']) and os.path.exists(wav):
+                ok[t] = wav
+                break
 n = 0
 for t, wav in sorted(ok.items()):
     if t in RECORDED:
@@ -49,3 +61,6 @@ for t, wav in sorted(ok.items()):
     n += 1
 missing = [c + s for c in CONSONANTS for s in SIGNS if c + s not in ok and c + s not in RECORDED]
 print(f'imported {n}; still missing {len(missing)}:', ' '.join(missing))
+if len(sys.argv) > 2:
+    with open(sys.argv[2], 'w', encoding='utf-8') as f:
+        f.write(' '.join(sorted(ok)) + '\n')

@@ -60,6 +60,15 @@ def clean(t):
     return ''.join(ch for ch in t if 'ಀ' <= ch <= '೿')
 
 
+# The recogniser often hears a long vowel as short (ಕೀ as ಕಿ); listening
+# showed those takes are right.
+SHORT = {'ೀ': 'ಿ', 'ೂ': 'ು', 'ೇ': 'ೆ', 'ೋ': 'ೊ', 'ಾ': ''}
+
+
+def good(t, heard):
+    return heard == t or (t[-1] in SHORT and heard == t[:-1] + SHORT[t[-1]])
+
+
 def dist(a, b):
     d = list(range(len(b) + 1))
     for i, ca in enumerate(a, 1):
@@ -139,7 +148,10 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(out, 'takes'), exist_ok=True)
     shard, shards = int(os.environ.get('SHARD', 0)), int(os.environ.get('SHARDS', 1))
     cons = (os.environ.get('TEXTS') or CONSONANTS).replace(' ', '')
-    texts = [c + s for c in cons for s in SIGNS][shard::shards]
+    done = set()
+    if os.path.exists('tool/indicf5_done.txt'):
+        done = set(open('tool/indicf5_done.txt', encoding='utf-8').read().split())
+    texts = [c + s for c in cons for s in SIGNS if c + s not in done][shard::shards]
 
     ref_wav, ref_sr = sf.read(REF)
     ref_text = os.environ.get('REF_TEXT') or hear(ref_wav if ref_wav.ndim == 1
@@ -165,7 +177,7 @@ if __name__ == '__main__':
         if hasattr(tts, 'ema_model') and hasattr(tts, 'vocoder'):
             wav, _, _ = infer_process(ref_audio, ref_text_p, text, tts.ema_model,
                                       tts.vocoder, fix_duration=ref_secs + secs,
-                                      mel_spec_type='vocos')
+                                      mel_spec_type='vocos', nfe_step=16)
             return wav
         return tts(text, ref_audio_path=REF, ref_text=ref_text)
 
@@ -187,7 +199,7 @@ if __name__ == '__main__':
             a = a.astype(np.float32)
             for seg in segments(a, 24000):
                 got = clean(hear(seg, 24000))
-                d = dist(got, t)
+                d = 0 if good(t, got) else max(dist(got, t), 1)
                 sf.write(os.path.join(out, 'takes', f'{key(t)}_{n}.wav'), seg, 24000)
                 takes.append({'n': n, 'seed': seed, 'heard': got, 'dist': d,
                               'secs': round(len(seg) / 24000, 2)})
