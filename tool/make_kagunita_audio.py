@@ -137,20 +137,31 @@ def shift(x, ratio):
     return np.frombuffer(raw, np.float64).copy()
 
 
-def join(cons, vowel, k):
+def join(cons, vowel, k, cluster=False):
+    """cluster: the vowel starts with a consonant (ಋ = ru), so ಕೃ is k + ru
+    with no 'a' in between: cut the consonant before its vowel and keep the
+    start of the ಋ recording."""
     start = vowel_start(cons, k)
     # Say the vowel at the pitch the speaker used for this consonant.
     pc, pv = pitch(cons[start:start + int(0.15 * SR)]), pitch(vowel)
     if pc and pv:
         vowel = shift(vowel, float(np.clip(pc / pv, 0.7, 1.4)))
-    cut = start + int(KEEP_MS / 1000 * SR)
-    fade = int(FADE_MS / 1000 * SR)
-    head = cons[:cut + fade].copy()
-    tail = vowel[int(ATTACK_MS / 1000 * SR):].copy()
-    # Match loudness around the join.
-    a = np.sqrt((head[-fade * 3:] ** 2).mean()) + 1e-9
-    b = np.sqrt((tail[:fade * 3] ** 2).mean()) + 1e-9
-    tail *= a / b
+    if cluster:
+        fade = int(0.008 * SR)
+        cut = max(start - fade, fade)
+        head = cons[:cut + fade].copy()
+        tail = vowel.copy()
+    else:
+        cut = start + int(KEEP_MS / 1000 * SR)
+        fade = int(FADE_MS / 1000 * SR)
+        head = cons[:cut + fade].copy()
+        tail = vowel[int(ATTACK_MS / 1000 * SR):].copy()
+    # Match loudness around the join (a cluster joins a quiet burst to a
+    # full syllable: keep both as recorded).
+    if not cluster:
+        a = np.sqrt((head[-fade * 3:] ** 2).mean()) + 1e-9
+        b = np.sqrt((tail[:fade * 3] ** 2).mean()) + 1e-9
+        tail *= a / b
     ramp = np.linspace(0, 1, fade)
     mid = head[-fade:] * (1 - ramp) + tail[:fade] * ramp
     y = np.concatenate([head[:-fade], mid, tail[fade:]])
@@ -178,7 +189,7 @@ if __name__ == '__main__':
         for s, v in SIGNS.items():
             if c + s in RECORDED and out == 'assets/audio':
                 continue
-            save(join(cons, vowels[v], kind(c)), os.path.join(out, key(c + s) + '.ogg'))
+            save(join(cons, vowels[v], kind(c), cluster=s == 'ೃ'), os.path.join(out, key(c + s) + '.ogg'))
             male = os.path.join('assets/audio_m', key(c + s) + '.ogg')
             if out == 'assets/audio' and os.path.exists(male):
                 os.remove(male)
