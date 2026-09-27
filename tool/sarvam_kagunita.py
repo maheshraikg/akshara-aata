@@ -30,7 +30,13 @@ KEY = os.environ.get('SARVAM_API_KEY', '')
 # v3 voices only if Kavya never gets it right. (bulbul:v2 is retired.)
 _FORMS = [(0.75, '{t}'), (0.75, '{t}.'), (0.9, '{t}'), (0.65, '{t}.'), (0.85, '{t}!'),
           (0.7, '{t},'), (1.0, '{t}.'), (0.6, '{t}')]
-TAKES = [('bulbul:v3', sp, pace, form)
+if os.environ.get('PASS') == '2':
+    # Second pass: Kavya only, varied by temperature so retries differ.
+    _FORMS = [(p, f) for p in (0.75, 0.65, 0.85) for f in ('{t}', '{t}.')]
+    TAKES = [('bulbul:v3', 'kavya', p, f, temp) for temp in (0.9, 0.6, 0.3) for p, f in _FORMS]
+else:
+    TAKES = None
+TAKES = TAKES or [('bulbul:v3', sp, pace, form, None)
          for sp in (os.environ.get('SPEAKER', 'kavya'), 'roopa', 'priya')
          for pace, form in (_FORMS if sp == os.environ.get('SPEAKER', 'kavya') else _FORMS[:4])]
 
@@ -43,9 +49,14 @@ def clean(t):
     return ''.join(ch for ch in t if 'ಀ' <= ch <= '೿')
 
 
-def tts(text, model, speaker, pace):
+_temp_ok = [True]
+
+
+def tts(text, model, speaker, pace, temperature=None):
     body = {'text': text, 'target_language_code': 'kn-IN', 'speaker': speaker,
             'model': model, 'pace': pace, 'speech_sample_rate': 24000}
+    if temperature is not None and _temp_ok[0]:
+        body['temperature'] = temperature
     req = urllib.request.Request('https://api.sarvam.ai/text-to-speech',
                                  data=json.dumps(body).encode(),
                                  headers={'api-subscription-key': KEY,
@@ -61,6 +72,9 @@ def tts(text, model, speaker, pace):
             if e.code == 429 or e.code >= 500:
                 time.sleep(5 * (n + 1))
                 continue
+            if 'temperature' in body and 'temperature' in msg:
+                _temp_ok[0] = False                # not supported: go without it
+                return tts(text, model, speaker, pace)
             print('sarvam error', e.code, msg, flush=True)
             return None, 0
     return None, 0
@@ -117,15 +131,16 @@ if __name__ == '__main__':
     report = {'items': {}}
     for t in texts:
         takes = []
-        for n, (model, speaker, pace, form) in enumerate(TAKES):
-            a, sr = tts(form.format(t=t), model, speaker, pace)
+        for n, (model, speaker, pace, form, temp) in enumerate(TAKES):
+            a, sr = tts(form.format(t=t), model, speaker, pace, temp)
             if a is None:
                 continue
             a = trim(a, sr)
             got = hear(a, sr)
             sf.write(os.path.join(out, 'takes', f'{key(t)}_{n}.wav'), a, sr)
             takes.append({'n': n, 'model': model, 'speaker': speaker, 'pace': pace,
-                          'form': form, 'heard': got, 'secs': round(len(a) / sr, 2)})
+                          'form': form, 'temperature': temp, 'heard': got,
+                          'secs': round(len(a) / sr, 2)})
             print(t, n, model, speaker, pace, repr(got), flush=True)
             if got == t:
                 sf.write(os.path.join(out, f'{key(t)}.wav'), a, sr)
