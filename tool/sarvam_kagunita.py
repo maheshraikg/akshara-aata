@@ -26,9 +26,13 @@ SIGNS = ['ಾ', 'ಿ', 'ೀ', 'ು', 'ೂ', 'ೃ', 'ೆ', 'ೇ', 'ೈ', 'ೊ', '
 RECORDED = {'ಗೆ', 'ದಿ', 'ಮೇ', 'ಹೇ', 'ಹೂ'}
 KEY = os.environ.get('SARVAM_API_KEY', '')
 # (model, speaker, pace, text form): tried in order until one is heard right.
-TAKES = [(m, sp, pace, form) for m, sp in (('bulbul:v3', os.environ.get('SPEAKER', 'kavya')),
-                                            ('bulbul:v2', 'anushka'))
-         for pace, form in ((0.75, '{t}'), (0.75, '{t}.'), (0.9, '{t}'), (0.65, '{t}.'))]
+# The approved voice (Kavya) first with several paces and spellings; other
+# v3 voices only if Kavya never gets it right. (bulbul:v2 is retired.)
+_FORMS = [(0.75, '{t}'), (0.75, '{t}.'), (0.9, '{t}'), (0.65, '{t}.'), (0.85, '{t}!'),
+          (0.7, '{t},'), (1.0, '{t}.'), (0.6, '{t}')]
+TAKES = [('bulbul:v3', sp, pace, form)
+         for sp in (os.environ.get('SPEAKER', 'kavya'), 'roopa', 'priya')
+         for pace, form in (_FORMS if sp == os.environ.get('SPEAKER', 'kavya') else _FORMS[:4])]
 
 
 def key(t):
