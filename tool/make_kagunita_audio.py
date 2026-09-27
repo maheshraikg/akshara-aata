@@ -25,9 +25,9 @@ SIGNS = {'ಾ': 'ಆ', 'ಿ': 'ಇ', 'ೀ': 'ಈ', 'ು': 'ಉ', 'ೂ': 'ಊ', '
 # Whole-syllable native recordings from Lingua Libre (import_commons.py)
 # are kept.
 RECORDED = {'ಗೆ', 'ದಿ', 'ಮೇ', 'ಹೇ', 'ಹೂ'}
-KEEP_MS = 30      # of the consonant's own vowel transition
-FADE_MS = 25
-ATTACK_MS = 35    # skipped at the start of the vowel recording
+KEEP_MS = 10      # of the consonant's own vowel transition
+FADE_MS = 20
+ATTACK_MS = 50    # skipped at the start of the vowel recording
 
 
 def load(path):
@@ -61,14 +61,28 @@ def voicing(fr):
     return np.array(out)
 
 
-# Nasals, liquids, glides and ha: loud and steady before the vowel too.
-SONORANTS = set('ಙಞಣನಮಯರಲವಳಹ')
+# Nasals, liquids and glides: loud and steady before the vowel too.
+SONORANTS = set('ಙಞಣನಮಯರಲವಳ')
 # Voiced aspirates: keep their breathy start, the 'h' of gha.
 BREATHY = set('ಘಝಢಧಭ')
 
 
 def kind(c):
+    if c == 'ಹ':
+        return 'h'
     return 'sonorant' if c in SONORANTS else 'breathy' if c in BREATHY else 'obstruent'
+
+
+def release_of(x):
+    """Sample where a nasal, liquid or glide gives way to the vowel."""
+    idx, fr = frames(x)
+    rms = np.sqrt((fr ** 2).mean(1))
+    spec = np.log(np.abs(np.fft.rfft(fr, axis=1))[:, :200] + 1e-6)
+    flux = np.convolve(np.r_[0, np.linalg.norm(np.diff(spec, axis=0), axis=1)],
+                       np.ones(5) / 5, 'same')
+    both = np.r_[False, (rms[1:] > rms.max() * 0.15) & (rms[:-1] > rms.max() * 0.15)]
+    cand = np.where(both & (np.arange(len(fr)) < len(fr) * 0.6), flux, 0)
+    return int(idx[int(np.argmax(cand))])
 
 
 def vowel_start(x, kind='obstruent'):
@@ -92,6 +106,10 @@ def vowel_start(x, kind='obstruent'):
     early = np.arange(len(fr)) < len(fr) * 0.6
     cand = np.where(both & early, flux_s, 0)
     release = int(np.argmax(cand)) if sonorant and cand.max() > 0 else 0
+    if kind == 'h':
+        # The breathy h is quieter than its vowel: the vowel starts where
+        # the sound gets loud.
+        return int(idx[int(np.argmax(rms > rms.max() * 0.3))])
     if kind == 'obstruent':
         # Stops, affricates and fricatives: the vowel starts where steady
         # voicing starts (after the burst, aspiration or hiss).
@@ -126,15 +144,77 @@ def pitch(x):
     return float(np.median(out)) if out else 0.0
 
 
+def periods(x):
+    """Local pitch period (samples) every 5 ms; 0 where unvoiced."""
+    n = 1024
+    out = np.zeros(len(x) // HOP + 1, int)
+    lo, hi = SR // 400, SR // 90
+    for j, i in enumerate(range(0, len(x), HOP)):
+        f = x[max(i - n // 2, 0):i + n // 2]
+        if len(f) < hi * 2:
+            continue
+        f = f * np.hanning(len(f))
+        ac = np.correlate(f, f, 'full')[len(f) - 1:]
+        if ac[0] <= 1e-9:
+            continue
+        ac /= ac[0]
+        k = int(np.argmax(ac[lo:hi])) + lo
+        if ac[k] > 0.5:
+            out[j] = k
+    return out
+
+
 def shift(x, ratio):
-    """Pitch-shift keeping the formants (so the vowel still sounds the same)."""
+    """Pitch-shift by TD-PSOLA: two-period grains at each pitch mark are
+    re-spaced by period / ratio, which keeps the formants (the vowel's
+    sound) and the loudness shape."""
     if abs(ratio - 1) < 0.02:
         return x
-    raw = subprocess.run(['ffmpeg', '-v', 'error', '-f', 'f64le', '-ar', str(SR), '-ac', '1',
-                          '-i', '-', '-af', f'rubberband=pitch={ratio:.4f}:formant=preserved',
-                          '-f', 'f64le', '-'], input=x.tobytes(), capture_output=True,
-                         check=True).stdout
-    return np.frombuffer(raw, np.float64).copy()
+    per = periods(x)
+
+    def period_at(t):
+        return per[min(int(t) // HOP, len(per) - 1)]
+
+    # Analysis marks: every period in voiced parts, every 5 ms elsewhere.
+    marks, t = [], 0
+    while t < len(x):
+        p = period_at(t)
+        if p:
+            w = x[t:t + p]
+            if len(w):
+                t0 = t + int(np.argmax(np.abs(w))) if not marks else t
+                marks.append((t0, p))
+                t = t0 + p
+                continue
+        marks.append((t, 0))
+        t += HOP
+    y = np.zeros(len(x) + 2048)
+    norm = np.zeros_like(y)
+    t_out = marks[0][0]
+    ai = 0
+    while t_out < len(x) and marks:
+        # Nearest analysis mark in time.
+        while ai + 1 < len(marks) and abs(marks[ai + 1][0] - t_out) <= abs(marks[ai][0] - t_out):
+            ai += 1
+        t_in, p = marks[ai]
+        half = p if p else HOP
+        g0, g1 = max(t_in - half, 0), min(t_in + half, len(x))
+        grain = x[g0:g1] * np.hanning(g1 - g0)
+        o0 = t_out - (t_in - g0)
+        if o0 >= 0:
+            y[o0:o0 + len(grain)] += grain
+            norm[o0:o0 + len(grain)] += np.hanning(g1 - g0)
+        t_out += int(round(p / ratio)) if p else HOP
+    y = y[:len(x)] / np.maximum(norm[:len(x)], 0.5)
+    return y
+
+
+def loudest(x):
+    """Highest RMS over 50 ms windows."""
+    w = int(0.05 * SR)
+    if len(x) < w:
+        return float(np.sqrt((x ** 2).mean())) + 1e-9
+    return float(np.sqrt(np.convolve(x ** 2, np.ones(w) / w, 'valid').max())) + 1e-9
 
 
 def join(cons, vowel, k, cluster=False):
@@ -148,20 +228,32 @@ def join(cons, vowel, k, cluster=False):
         vowel = shift(vowel, float(np.clip(pc / pv, 0.7, 1.4)))
     if cluster:
         fade = int(0.008 * SR)
-        cut = max(start - fade, fade)
-        head = cons[:cut + fade].copy()
-        tail = vowel.copy()
+        # Stop before the consonant's own vowel: at the release for m, n, l…
+        if k == 'sonorant':
+            end = release_of(cons)
+        elif k == 'breathy':
+            end = vowel_start(cons, 'obstruent')    # before the breathy 'a'
+        else:
+            end = start
+        cut = max(end - fade, fade)
+        # A long hum before m, n, l… reads as its own sound: keep 70 ms.
+        begin = max(cut - int(0.07 * SR), 0) if k == 'sonorant' else 0
+        head = cons[begin:cut + fade].copy()
+        # ಋ opens with a short lead-in before the r tap; after a consonant
+        # that sounds like k-ə-ru, so start at the tap (the energy dip).
+        _, fr = frames(vowel, 256)
+        rms = np.sqrt((fr ** 2).mean(1))
+        lo, hi = 4, max(5, int(len(rms) * 0.4))
+        dip = lo + int(np.argmin(rms[lo:hi]))
+        tail = vowel[max(dip * HOP - int(0.005 * SR), 0):].copy()
     else:
         cut = start + int(KEEP_MS / 1000 * SR)
         fade = int(FADE_MS / 1000 * SR)
         head = cons[:cut + fade].copy()
         tail = vowel[int(ATTACK_MS / 1000 * SR):].copy()
-    # Match loudness around the join (a cluster joins a quiet burst to a
-    # full syllable: keep both as recorded).
-    if not cluster:
-        a = np.sqrt((head[-fade * 3:] ** 2).mean()) + 1e-9
-        b = np.sqrt((tail[:fade * 3] ** 2).mean()) + 1e-9
-        tail *= a / b
+    # Say the vowel as loud as the speaker said this consonant's own vowel
+    # (the join itself is still rising, so matching there made it too quiet).
+    tail *= loudest(cons[start:]) / loudest(vowel)
     ramp = np.linspace(0, 1, fade)
     mid = head[-fade:] * (1 - ramp) + tail[:fade] * ramp
     y = np.concatenate([head[:-fade], mid, tail[fade:]])
