@@ -78,9 +78,10 @@ def load_asr():
                                             trust_remote_code=True)
             return
         except Exception as e:  # noqa: BLE001
-            if '429' not in str(e) or n == 5:
+            # Rate limits show up wrapped in other errors: wait and retry.
+            if n == 5:
                 raise
-            print('rate limited, waiting', flush=True)
+            print('download failed, waiting:', str(e)[:120], flush=True)
             time.sleep(90 * (n + 1))
 
 
