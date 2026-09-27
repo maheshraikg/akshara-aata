@@ -21,6 +21,28 @@ import torch
 import torchaudio
 from transformers import AutoModel
 
+# Parallel shards share the Hugging Face rate limit: start them apart.
+time.sleep(45 * int(os.environ.get('SHARD', 0)))
+
+
+def retry(fn, *a, **k):
+    for n in range(6):
+        try:
+            return fn(*a, **k)
+        except Exception as e:  # noqa: BLE001
+            if '429' not in str(e) or n == 5:
+                raise
+            print('rate limited, waiting', flush=True)
+            time.sleep(90 * (n + 1))
+
+
+def offline():
+    """Models are cached now: stop asking Hugging Face on every call."""
+    os.environ['HF_HUB_OFFLINE'] = '1'
+    os.environ['TRANSFORMERS_OFFLINE'] = '1'
+    import huggingface_hub.constants as hc
+    hc.HF_HUB_OFFLINE = True
+
 CONSONANTS = 'ಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಲವಶಷಸಹಳ'
 SIGNS = ['ಾ', 'ಿ', 'ೀ', 'ು', 'ೂ', 'ೃ', 'ೆ', 'ೇ', 'ೈ', 'ೊ', 'ೋ', 'ೌ', 'ಂ', 'ಃ']
 REF = os.environ.get('REF', 'KAN_F_HAPPY_00001.wav')
@@ -47,8 +69,8 @@ def dist(a, b):
 # IndicConformer is gated on Hugging Face; without access, use the open
 # Vakyansh Kannada wav2vec2 model.
 try:
-    _conf = AutoModel.from_pretrained('ai4bharat/indic-conformer-600m-multilingual',
-                                      trust_remote_code=True)
+    _conf = retry(AutoModel.from_pretrained, 'ai4bharat/indic-conformer-600m-multilingual',
+                  trust_remote_code=True)
     ASR = 'ai4bharat/indic-conformer-600m-multilingual'
 
     def _run(w):
@@ -57,8 +79,8 @@ except Exception as e:  # noqa: BLE001
     print('IndicConformer not available:', str(e)[:120], flush=True)
     from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
     ASR = os.environ.get('ASR', 'Harveenchadha/vakyansh-wav2vec2-kannada-knm-560')
-    _proc = Wav2Vec2Processor.from_pretrained(ASR)
-    _w2v = Wav2Vec2ForCTC.from_pretrained(ASR).eval()
+    _proc = retry(Wav2Vec2Processor.from_pretrained, ASR)
+    _w2v = retry(Wav2Vec2ForCTC.from_pretrained, ASR).eval()
 
     def _run(w):
         inp = _proc(w[0].numpy(), sampling_rate=16000, return_tensors='pt')
@@ -97,7 +119,7 @@ if __name__ == '__main__':
                                                   else ref_wav.mean(1), ref_sr)
     print('reference text:', ref_text, flush=True)
     try:
-        tts = AutoModel.from_pretrained('ai4bharat/IndicF5', trust_remote_code=True)
+        tts = retry(AutoModel.from_pretrained, 'ai4bharat/IndicF5', trust_remote_code=True)
     except OSError as e:
         if 'gated' not in str(e):
             raise
@@ -106,6 +128,7 @@ if __name__ == '__main__':
               'https://huggingface.co/ai4bharat/IndicF5 with the HF_TOKEN account')
         sys.exit(0)
 
+    offline()
     report = {'ref_text': ref_text, 'asr': ASR, 'items': {}}
     for t in texts:
         takes = []
