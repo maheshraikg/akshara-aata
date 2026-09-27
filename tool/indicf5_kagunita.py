@@ -60,13 +60,34 @@ def clean(t):
     return ''.join(ch for ch in t if 'ಀ' <= ch <= '೿')
 
 
-# The recogniser often hears a long vowel as short (ಕೀ as ಕಿ); listening
-# showed those takes are right.
+# F5 often says a long vowel short (ಕೀ like ಕಿ). Such a take gets its
+# vowel stretched and is kept only if the recogniser then hears it long.
 SHORT = {'ೀ': 'ಿ', 'ೂ': 'ು', 'ೇ': 'ೆ', 'ೋ': 'ೊ', 'ಾ': ''}
 
 
 def good(t, heard):
-    return heard == t or (t[-1] in SHORT and heard == t[:-1] + SHORT[t[-1]])
+    return heard == t
+
+
+def lengthen(a, sr, factor=1.9):
+    """Stretch the vowel (from where the sound gets loud) keeping pitch."""
+    import subprocess
+    hop = sr // 100
+    env = np.array([np.sqrt(np.mean(a[i:i + hop] ** 2)) for i in range(0, len(a), hop)])
+    on = int(np.argmax(env > env.max() * 0.3)) * hop + sr // 50
+    head, tail = a[:on], a[on:]
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-f', 'f32le', '-ar', str(sr), '-ac', '1',
+                          '-i', '-', '-af', f'atempo={1 / factor:.3f}', '-f', 'f32le', '-'],
+                         input=tail.astype(np.float32).tobytes(), capture_output=True,
+                         check=True).stdout
+    tail = np.frombuffer(raw, np.float32)
+    f = min(sr // 200, len(head), len(tail))
+    if f:
+        ramp = np.linspace(0, 1, f, dtype=np.float32)
+        tail = tail.copy()
+        tail[:f] = head[-f:] * (1 - ramp) + tail[:f] * ramp
+        head = head[:-f]
+    return np.concatenate([head, tail])
 
 
 def dist(a, b):
@@ -199,6 +220,12 @@ if __name__ == '__main__':
             a = a.astype(np.float32)
             for seg in segments(a, 24000):
                 got = clean(hear(seg, 24000))
+                if t[-1] in SHORT and got == t[:-1] + SHORT[t[-1]]:
+                    longer = lengthen(seg, 24000)
+                    got2 = clean(hear(longer, 24000))
+                    print('  stretched:', repr(got2), flush=True)
+                    if got2 == t:
+                        seg, got = longer, got2
                 d = 0 if good(t, got) else max(dist(got, t), 1)
                 sf.write(os.path.join(out, 'takes', f'{key(t)}_{n}.wav'), seg, 24000)
                 takes.append({'n': n, 'seed': seed, 'heard': got, 'dist': d,

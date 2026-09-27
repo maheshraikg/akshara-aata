@@ -14,13 +14,10 @@ import sys
 
 CONSONANTS = 'ಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಲವಶಷಸಹಳ'
 SIGNS = ['ಾ', 'ಿ', 'ೀ', 'ು', 'ೂ', 'ೃ', 'ೆ', 'ೇ', 'ೈ', 'ೊ', 'ೋ', 'ೌ', 'ಂ', 'ಃ']
-# The recogniser often hears a long vowel as short (ಕೀ as ಕಿ); listening
-# showed those takes are right, so they count too.
-SHORT = {'ೀ': 'ಿ', 'ೂ': 'ು', 'ೇ': 'ೆ', 'ೋ': 'ೊ', 'ಾ': ''}
-
-
+# Only takes heard exactly right (a long vowel heard short is wrong: the
+# user heard ಕೀ as ಕಿ).
 def good(t, heard):
-    return heard == t or (t[-1] in SHORT and heard == t[:-1] + SHORT[t[-1]])
+    return heard == t
 
 
 # Whole-syllable native recordings (Lingua Libre) stay.
@@ -38,7 +35,6 @@ for f in glob.glob(os.path.join(src, '**', 'report-*.json'), recursive=True):
     for t, v in r['items'].items():
         if t in ok or not v['takes'] or 'seed' not in v['takes'][0]:
             continue
-        # Exact matches first, then long vowels heard as short.
         for x in sorted(v['takes'], key=lambda x: (x['heard'] != t, x['n'])):
             wav = os.path.join(os.path.dirname(f), 'takes', f"{key(t)}_{x['n']}.wav")
             if good(t, x['heard']) and os.path.exists(wav):
