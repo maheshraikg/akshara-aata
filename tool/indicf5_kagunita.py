@@ -43,8 +43,28 @@ def dist(a, b):
     return d[-1]
 
 
-asr = AutoModel.from_pretrained('ai4bharat/indic-conformer-600m-multilingual',
-                                trust_remote_code=True)
+# IndicConformer is gated on Hugging Face; without access, use the open
+# Vakyansh Kannada wav2vec2 model.
+try:
+    _conf = AutoModel.from_pretrained('ai4bharat/indic-conformer-600m-multilingual',
+                                      trust_remote_code=True)
+    ASR = 'ai4bharat/indic-conformer-600m-multilingual'
+
+    def _run(w):
+        return str(_conf(w, 'kn', 'ctc'))
+except Exception as e:  # noqa: BLE001
+    print('IndicConformer not available:', str(e)[:120], flush=True)
+    from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+    ASR = os.environ.get('ASR', 'Harveenchadha/vakyansh-wav2vec2-kannada-knm-560')
+    _proc = Wav2Vec2Processor.from_pretrained(ASR)
+    _w2v = Wav2Vec2ForCTC.from_pretrained(ASR).eval()
+
+    def _run(w):
+        inp = _proc(w[0].numpy(), sampling_rate=16000, return_tensors='pt')
+        with torch.no_grad():
+            ids = _w2v(inp.input_values).logits.argmax(-1)
+        return _proc.batch_decode(ids)[0]
+print('recogniser:', ASR, flush=True)
 
 
 def hear(wav, sr):
@@ -53,7 +73,7 @@ def hear(wav, sr):
         w = torchaudio.transforms.Resample(sr, 16000)(w)
     # Pad: the recogniser needs some context around a short syllable.
     pad = torch.zeros(1, 4000)
-    return str(asr(torch.cat([pad, w, pad], 1), 'kn', 'ctc')).strip()
+    return _run(torch.cat([pad, w, pad], 1)).strip()
 
 
 def trim(a, sr):
@@ -77,7 +97,7 @@ if __name__ == '__main__':
     print('reference text:', ref_text, flush=True)
     tts = AutoModel.from_pretrained('ai4bharat/IndicF5', trust_remote_code=True)
 
-    report = {'ref_text': ref_text, 'items': {}}
+    report = {'ref_text': ref_text, 'asr': ASR, 'items': {}}
     for t in texts:
         takes = []
         for n, (end, seed) in enumerate(TAKES):
