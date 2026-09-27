@@ -1,0 +1,104 @@
+"""Speaks kagunita (ಕಾ … ಳಃ) with AI4Bharat IndicF5 (MIT) and keeps only
+takes that AI4Bharat's Kannada speech recogniser (IndicConformer, MIT)
+hears as the right syllable.
+
+  HF_TOKEN=… SHARD=0 SHARDS=1 TEXTS="ಕ ಖ" python3 tool/indicf5_kagunita.py out/
+
+For every syllable several takes are made (different seeds, with and
+without a full stop). Each take is transcribed; the take whose transcript
+matches the syllable (or is closest) is saved as out/<key>.wav, all takes
+as out/takes/<key>_<n>.wav, and out/report-<shard>.json lists them.
+The voice is IndicF5's Kannada reference speaker (prompts/KAN_F_HAPPY_00001.wav).
+"""
+import json
+import os
+import sys
+
+import numpy as np
+import soundfile as sf
+import torch
+import torchaudio
+from transformers import AutoModel
+
+CONSONANTS = 'ಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಲವಶಷಸಹಳ'
+SIGNS = ['ಾ', 'ಿ', 'ೀ', 'ು', 'ೂ', 'ೃ', 'ೆ', 'ೇ', 'ೈ', 'ೊ', 'ೋ', 'ೌ', 'ಂ', 'ಃ']
+REF = os.environ.get('REF', 'KAN_F_HAPPY_00001.wav')
+TAKES = [('', 1), ('', 2), ('.', 3), ('.', 4), ('', 5), ('.', 6)]
+
+
+def key(t):
+    return '_'.join(f'{ord(c):x}' for c in t)
+
+
+def clean(t):
+    return ''.join(ch for ch in t if 'ಀ' <= ch <= '೿')
+
+
+def dist(a, b):
+    d = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        prev, d[0] = d[0], i
+        for j, cb in enumerate(b, 1):
+            prev, d[j] = d[j], min(d[j] + 1, d[j - 1] + 1, prev + (ca != cb))
+    return d[-1]
+
+
+asr = AutoModel.from_pretrained('ai4bharat/indic-conformer-600m-multilingual',
+                                trust_remote_code=True)
+
+
+def hear(wav, sr):
+    w = torch.tensor(wav, dtype=torch.float32).reshape(1, -1)
+    if sr != 16000:
+        w = torchaudio.transforms.Resample(sr, 16000)(w)
+    # Pad: the recogniser needs some context around a short syllable.
+    pad = torch.zeros(1, 4000)
+    return str(asr(torch.cat([pad, w, pad], 1), 'kn', 'ctc')).strip()
+
+
+def trim(a, sr):
+    env = np.convolve(np.abs(a), np.ones(240) / 240, 'same')
+    on = np.nonzero(env > env.max() * 0.02)[0]
+    if not len(on):
+        return a
+    return a[max(on[0] - sr // 50, 0):on[-1] + sr // 20]
+
+
+if __name__ == '__main__':
+    out = sys.argv[1]
+    os.makedirs(os.path.join(out, 'takes'), exist_ok=True)
+    shard, shards = int(os.environ.get('SHARD', 0)), int(os.environ.get('SHARDS', 1))
+    cons = (os.environ.get('TEXTS') or CONSONANTS).replace(' ', '')
+    texts = [c + s for c in cons for s in SIGNS][shard::shards]
+
+    ref_wav, ref_sr = sf.read(REF)
+    ref_text = os.environ.get('REF_TEXT') or hear(ref_wav if ref_wav.ndim == 1
+                                                  else ref_wav.mean(1), ref_sr)
+    print('reference text:', ref_text, flush=True)
+    tts = AutoModel.from_pretrained('ai4bharat/IndicF5', trust_remote_code=True)
+
+    report = {'ref_text': ref_text, 'items': {}}
+    for t in texts:
+        takes = []
+        for n, (end, seed) in enumerate(TAKES):
+            torch.manual_seed(seed)
+            a = tts(t + end, ref_audio_path=REF, ref_text=ref_text)
+            a = np.asarray(a)
+            if a.dtype == np.int16:
+                a = a.astype(np.float32) / 32768.0
+            a = trim(a.astype(np.float32), 24000)
+            got = clean(hear(a, 24000))
+            d = dist(got, t)
+            sf.write(os.path.join(out, 'takes', f'{key(t)}_{n}.wav'), a, 24000)
+            takes.append({'n': n, 'heard': got, 'dist': d, 'secs': round(len(a) / 24000, 2)})
+            print(t, n, repr(got), d, flush=True)
+            if d == 0 and sum(x['dist'] == 0 for x in takes) >= 2:
+                break
+        best = min(takes, key=lambda x: (x['dist'], x['n']))
+        a, _ = sf.read(os.path.join(out, 'takes', f"{key(t)}_{best['n']}.wav"))
+        sf.write(os.path.join(out, f'{key(t)}.wav'), a, 24000)
+        report['items'][t] = {'best': best['n'], 'ok': best['dist'] == 0, 'takes': takes}
+    with open(os.path.join(out, f'report-{shard}.json'), 'w', encoding='utf-8') as f:
+        json.dump(report, f, ensure_ascii=False, indent=1)
+    ok = sum(v['ok'] for v in report['items'].values())
+    print(f'{ok}/{len(texts)} heard exactly right')
