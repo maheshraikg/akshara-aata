@@ -46,6 +46,9 @@ def offline():
 CONSONANTS = 'ಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಲವಶಷಸಹಳ'
 SIGNS = ['ಾ', 'ಿ', 'ೀ', 'ು', 'ೂ', 'ೃ', 'ೆ', 'ೇ', 'ೈ', 'ೊ', 'ೋ', 'ೌ', 'ಂ', 'ಃ']
 REF = os.environ.get('REF', 'KAN_F_HAPPY_00001.wav')
+# Seconds of speech: long vowels, ಂ and ಃ take longer.
+LENGTH = {'ಾ': 0.7, 'ೀ': 0.7, 'ೂ': 0.75, 'ೇ': 0.7, 'ೈ': 0.7, 'ೋ': 0.7, 'ೌ': 0.75,
+          'ಂ': 0.6, 'ಃ': 0.75}
 TAKES = [('', 1), ('', 2), ('.', 3), ('.', 4), ('', 5), ('.', 6)]
 
 
@@ -128,6 +131,20 @@ if __name__ == '__main__':
               'https://huggingface.co/ai4bharat/IndicF5 with the HF_TOKEN account')
         sys.exit(0)
 
+    # The wrapper sizes the output by letter count, which gives a two-letter
+    # syllable ~0.12 s. Call F5 directly with a fixed, natural length.
+    from f5_tts.infer.utils_infer import infer_process, preprocess_ref_audio_text
+    ref_audio, ref_text_p = preprocess_ref_audio_text(REF, ref_text)
+    ref_secs = sf.info(ref_audio).duration
+
+    def speak(text, secs):
+        if hasattr(tts, 'ema_model') and hasattr(tts, 'vocoder'):
+            wav, _, _ = infer_process(ref_audio, ref_text_p, text, tts.ema_model,
+                                      tts.vocoder, fix_duration=ref_secs + secs,
+                                      mel_spec_type='vocos')
+            return wav
+        return tts(text, ref_audio_path=REF, ref_text=ref_text)
+
     offline()
     report = {'ref_text': ref_text, 'asr': ASR, 'items': {}}
     for t in texts:
@@ -135,7 +152,7 @@ if __name__ == '__main__':
         for n, (end, seed) in enumerate(TAKES):
             torch.manual_seed(seed)
             t0 = time.time()
-            a = tts(t + end, ref_audio_path=REF, ref_text=ref_text)
+            a = speak(t + end, LENGTH.get(t[-1], 0.45))
             print(f'  took {time.time() - t0:.0f}s', flush=True)
             a = np.asarray(a)
             if a.dtype == np.int16:
