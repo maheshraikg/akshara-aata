@@ -70,6 +70,10 @@ def load_asr():
     time.sleep(40 * int(os.environ.get('SHARD', 0)))   # shards share the HF rate limit
     for n in range(6):
         try:
+            from huggingface_hub import snapshot_download
+            # Fetch every file first: the model's own loader expects the
+            # assets folder to be there already.
+            snapshot_download('ai4bharat/indic-conformer-600m-multilingual')
             asr = AutoModel.from_pretrained('ai4bharat/indic-conformer-600m-multilingual',
                                             trust_remote_code=True)
             return
