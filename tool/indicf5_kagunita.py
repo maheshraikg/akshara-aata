@@ -102,6 +102,30 @@ def hear(wav, sr):
     return _run(torch.cat([pad, w, pad], 1)).strip()
 
 
+def segments(a, sr):
+    """Voiced stretches of a take (the repeated syllables), each padded."""
+    hop = sr // 100
+    env = np.array([np.sqrt(np.mean(a[i:i + hop] ** 2)) for i in range(0, len(a), hop)])
+    if not len(env) or env.max() <= 0:
+        return []
+    on = env > env.max() * 0.1
+    runs, start = [], None
+    for i, v in enumerate(np.r_[on, False]):
+        if v and start is None:
+            start = i
+        elif not v and start is not None:
+            if runs and start - runs[-1][1] < 8:      # merge gaps under 80 ms
+                runs[-1] = (runs[-1][0], i)
+            else:
+                runs.append((start, i))
+            start = None
+    out = []
+    for s0, s1 in runs:
+        if s1 - s0 >= 12:                            # at least 120 ms
+            out.append(a[max(s0 * hop - sr // 30, 0):min(s1 * hop + sr // 20, len(a))])
+    return out
+
+
 def trim(a, sr):
     env = np.convolve(np.abs(a), np.ones(240) / 240, 'same')
     on = np.nonzero(env > env.max() * 0.02)[0]
@@ -149,22 +173,30 @@ if __name__ == '__main__':
     report = {'ref_text': ref_text, 'asr': ASR, 'items': {}}
     for t in texts:
         takes = []
-        for n, (end, seed) in enumerate(TAKES):
+        n = 0
+        for seed in (1, 2, 3, 4):
+            # A lone syllable makes F5 babble parts of the reference; say it
+            # three times with pauses and cut out a copy heard right.
             torch.manual_seed(seed)
             t0 = time.time()
-            a = speak(t + end, LENGTH.get(t[-1], 0.45))
+            per = LENGTH.get(t[-1], 0.45) + 0.45
+            a = np.asarray(speak(f'{t}. {t}. {t}.', per * 3 + 0.3))
             print(f'  took {time.time() - t0:.0f}s', flush=True)
-            a = np.asarray(a)
             if a.dtype == np.int16:
                 a = a.astype(np.float32) / 32768.0
-            a = trim(a.astype(np.float32), 24000)
-            got = clean(hear(a, 24000))
-            d = dist(got, t)
-            sf.write(os.path.join(out, 'takes', f'{key(t)}_{n}.wav'), a, 24000)
-            takes.append({'n': n, 'heard': got, 'dist': d, 'secs': round(len(a) / 24000, 2)})
-            print(t, n, repr(got), d, flush=True)
-            if d == 0:
+            a = a.astype(np.float32)
+            for seg in segments(a, 24000):
+                got = clean(hear(seg, 24000))
+                d = dist(got, t)
+                sf.write(os.path.join(out, 'takes', f'{key(t)}_{n}.wav'), seg, 24000)
+                takes.append({'n': n, 'seed': seed, 'heard': got, 'dist': d,
+                              'secs': round(len(seg) / 24000, 2)})
+                print(t, seed, n, repr(got), d, flush=True)
+                n += 1
+            if any(x['dist'] == 0 for x in takes):
                 break
+        if not takes:
+            continue
         best = min(takes, key=lambda x: (x['dist'], x['n']))
         a, _ = sf.read(os.path.join(out, 'takes', f"{key(t)}_{best['n']}.wav"))
         sf.write(os.path.join(out, f'{key(t)}.wav'), a, 24000)
