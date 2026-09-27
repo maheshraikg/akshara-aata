@@ -62,8 +62,22 @@ def tts(text, model, speaker, pace):
     return None, 0
 
 
-asr = AutoModel.from_pretrained('ai4bharat/indic-conformer-600m-multilingual',
-                                trust_remote_code=True)
+asr = None
+
+
+def load_asr():
+    global asr
+    time.sleep(40 * int(os.environ.get('SHARD', 0)))   # shards share the HF rate limit
+    for n in range(6):
+        try:
+            asr = AutoModel.from_pretrained('ai4bharat/indic-conformer-600m-multilingual',
+                                            trust_remote_code=True)
+            return
+        except Exception as e:  # noqa: BLE001
+            if '429' not in str(e) or n == 5:
+                raise
+            print('rate limited, waiting', flush=True)
+            time.sleep(90 * (n + 1))
 
 
 def hear(a, sr):
@@ -84,6 +98,7 @@ if __name__ == '__main__':
     if not KEY:
         print('::warning::Add the SARVAM_API_KEY repository secret to run this.')
         sys.exit(0)
+    load_asr()
     out = sys.argv[1]
     os.makedirs(os.path.join(out, 'takes'), exist_ok=True)
     shard, shards = int(os.environ.get('SHARD', 0)), int(os.environ.get('SHARDS', 1))
