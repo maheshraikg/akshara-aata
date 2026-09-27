@@ -22,7 +22,7 @@ import torchaudio
 from transformers import AutoModel
 
 # Parallel shards share the Hugging Face rate limit: start them apart.
-time.sleep(45 * int(os.environ.get('SHARD', 0)))
+time.sleep(20 * int(os.environ.get('SHARD', 0)))
 
 
 def retry(fn, *a, **k):
@@ -163,7 +163,7 @@ if __name__ == '__main__':
             sf.write(os.path.join(out, 'takes', f'{key(t)}_{n}.wav'), a, 24000)
             takes.append({'n': n, 'heard': got, 'dist': d, 'secs': round(len(a) / 24000, 2)})
             print(t, n, repr(got), d, flush=True)
-            if d == 0 and sum(x['dist'] == 0 for x in takes) >= 2:
+            if d == 0:
                 break
         best = min(takes, key=lambda x: (x['dist'], x['n']))
         a, _ = sf.read(os.path.join(out, 'takes', f"{key(t)}_{best['n']}.wav"))
