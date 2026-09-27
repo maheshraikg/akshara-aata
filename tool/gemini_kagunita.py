@@ -46,7 +46,7 @@ def prompt(t, style):
 
 
 # (voice, prompt style), tried in order until one is heard right.
-TAKES = [(v, st) for v in (os.environ.get('VOICE', 'Kore'), 'Leda', 'Aoede') for st in (0, 1, 0)]
+TAKES = [(os.environ.get('VOICE', 'Kore'), 0), (os.environ.get('VOICE', 'Kore'), 1), ('Leda', 0)]
 _model = [None]
 
 
@@ -74,7 +74,11 @@ def tts(text, voice):
                     print('model not available:', model, flush=True)
                     break
                 if e.code == 429 or e.code >= 500:
-                    time.sleep(10 * (n + 1))
+                    print('gemini', e.code, msg[:200].replace('\n', ' '), flush=True)
+                    if 'per day' in msg.lower() or 'PerDay' in msg:
+                        print('::warning::Gemini free daily limit reached; run again tomorrow.')
+                        sys.exit(0)
+                    time.sleep(20 * (n + 1))
                     continue
                 print('gemini error', e.code, msg, flush=True)
                 return None, 0
@@ -151,5 +155,7 @@ if __name__ == '__main__':
         report['items'][t] = {'ok': any(x['heard'] == t for x in takes), 'takes': takes}
         with open(os.path.join(out, f'report-{shard}.json'), 'w', encoding='utf-8') as f:
             json.dump(report, f, ensure_ascii=False, indent=1)
+        if os.environ.get('PROGRESS_CMD'):
+            os.system(os.environ['PROGRESS_CMD'])
     ok = sum(v['ok'] for v in report['items'].values())
     print(f'{ok}/{len(texts)} heard exactly right')
