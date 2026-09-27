@@ -95,7 +95,15 @@ if __name__ == '__main__':
     ref_text = os.environ.get('REF_TEXT') or hear(ref_wav if ref_wav.ndim == 1
                                                   else ref_wav.mean(1), ref_sr)
     print('reference text:', ref_text, flush=True)
-    tts = AutoModel.from_pretrained('ai4bharat/IndicF5', trust_remote_code=True)
+    try:
+        tts = AutoModel.from_pretrained('ai4bharat/IndicF5', trust_remote_code=True)
+    except OSError as e:
+        if 'gated' not in str(e):
+            raise
+        # Needs one click by the Hugging Face account behind HF_TOKEN.
+        print('::warning::ai4bharat/IndicF5 is gated: request access at '
+              'https://huggingface.co/ai4bharat/IndicF5 with the HF_TOKEN account')
+        sys.exit(0)
 
     report = {'ref_text': ref_text, 'asr': ASR, 'items': {}}
     for t in texts:
