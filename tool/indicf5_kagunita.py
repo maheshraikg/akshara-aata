@@ -13,6 +13,7 @@ The voice is IndicF5's Kannada reference speaker (prompts/KAN_F_HAPPY_00001.wav)
 import json
 import os
 import sys
+import time
 
 import numpy as np
 import soundfile as sf
@@ -110,7 +111,9 @@ if __name__ == '__main__':
         takes = []
         for n, (end, seed) in enumerate(TAKES):
             torch.manual_seed(seed)
+            t0 = time.time()
             a = tts(t + end, ref_audio_path=REF, ref_text=ref_text)
+            print(f'  took {time.time() - t0:.0f}s', flush=True)
             a = np.asarray(a)
             if a.dtype == np.int16:
                 a = a.astype(np.float32) / 32768.0
@@ -126,6 +129,11 @@ if __name__ == '__main__':
         a, _ = sf.read(os.path.join(out, 'takes', f"{key(t)}_{best['n']}.wav"))
         sf.write(os.path.join(out, f'{key(t)}.wav'), a, 24000)
         report['items'][t] = {'best': best['n'], 'ok': best['dist'] == 0, 'takes': takes}
+        # Save progress after every syllable so partial results can be used.
+        with open(os.path.join(out, f'report-{shard}.json'), 'w', encoding='utf-8') as f:
+            json.dump(report, f, ensure_ascii=False, indent=1)
+        if os.environ.get('PROGRESS_CMD'):
+            os.system(os.environ['PROGRESS_CMD'])
     with open(os.path.join(out, f'report-{shard}.json'), 'w', encoding='utf-8') as f:
         json.dump(report, f, ensure_ascii=False, indent=1)
     ok = sum(v['ok'] for v in report['items'].values())
