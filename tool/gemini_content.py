@@ -26,7 +26,7 @@ import soundfile as sf
 sys.path.insert(0, os.path.dirname(__file__))
 GEMINI = os.environ.get('GEMINI_API_KEY', '')
 SARVAM = os.environ.get('SARVAM_API_KEY', '')
-MODELS = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-flash-latest']
+MODELS = ['gemini-flash-latest', 'gemini-flash-lite-latest']
 
 
 def key(t):
@@ -57,31 +57,66 @@ where roman is a simple romanisation and english the meaning.
 {items}"""
 
 
+def models():
+    """Current text models, fastest first: Gemini retires model names, so
+    ask the API which ones this key can use."""
+    names = []
+    try:
+        req = urllib.request.Request(
+            'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',
+            headers={'x-goog-api-key': GEMINI})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            for m in json.loads(r.read()).get('models', []):
+                n = m['name'].split('/')[-1]
+                if ('generateContent' in m.get('supportedGenerationMethods', [])
+                        and n.startswith('gemini')
+                        and not re.search('tts|image|live|audio|embed|vision|thinking', n)):
+                    names.append(n)
+    except Exception as e:  # noqa: BLE001
+        print('could not list models:', e, flush=True)
+
+    def rank(n):
+        v = re.search(r'gemini-(\d+(?:\.\d+)?)', n)
+        return ('flash' not in n, 'lite' in n, 'preview' in n or 'exp' in n,
+                -float(v.group(1)) if v else 0, n)
+    names.sort(key=rank)
+    print('models:', names[:8], flush=True)
+    return names + [m for m in MODELS if m not in names]
+
+
+_models = []
+
+
 def gemini(prompt):
     body = {'contents': [{'parts': [{'text': prompt}]}],
             'generationConfig': {'responseMimeType': 'application/json',
                                  'temperature': 0.6}}
-    for model in MODELS:
-        url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
-        req = urllib.request.Request(url, data=json.dumps(body).encode(),
-                                     headers={'x-goog-api-key': GEMINI,
-                                              'Content-Type': 'application/json'})
-        for n in range(5):
+    if not _models:
+        _models.extend(models())
+    for rnd in range(3):
+        for model in list(_models):
+            url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
+            req = urllib.request.Request(url, data=json.dumps(body).encode(),
+                                         headers={'x-goog-api-key': GEMINI,
+                                                  'Content-Type': 'application/json'})
             try:
-                with urllib.request.urlopen(req, timeout=180) as r:
+                with urllib.request.urlopen(req, timeout=240) as r:
                     data = json.loads(r.read())
                 text = data['candidates'][0]['content']['parts'][0]['text']
                 print('model', model, flush=True)
+                # Keep using the model that worked.
+                _models.remove(model)
+                _models.insert(0, model)
                 return json.loads(text)
             except urllib.error.HTTPError as e:
                 msg = e.read().decode(errors='replace')[:300]
-                print('gemini', model, e.code, msg.replace('\n', ' ')[:200], flush=True)
+                print('gemini', model, e.code, msg.replace('\n', ' ')[:160], flush=True)
                 if e.code in (404, 400, 403):
-                    break
-                time.sleep(30 * (n + 1))
-            except (KeyError, IndexError, ValueError) as e:
-                print('bad reply', model, e, flush=True)
-                time.sleep(10)
+                    _models.remove(model)
+                # 429 / 503: busy or over the free limit, try the next model.
+            except Exception as e:  # noqa: BLE001
+                print('bad reply', model, str(e)[:160], flush=True)
+        time.sleep(60 * (rnd + 1))
     return []
 
 
