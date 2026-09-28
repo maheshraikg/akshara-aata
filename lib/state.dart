@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'brain.dart';
 import 'data.dart';
 
 String _day(DateTime d) =>
@@ -22,6 +23,9 @@ class Profile {
 
   /// Wrong answers per letter in games, lowered again by right answers.
   final Map<String, int> weak = {};
+
+  /// Smart practice schedule per letter (see brain.dart).
+  final Map<String, Review> reviews = {};
   int streak = 0;
   String lastDay = '';
 
@@ -38,6 +42,11 @@ class Profile {
             (k, v) => MapEntry(k as String, v as int),
           ),
         )
+        ..reviews.addAll(
+          (m['reviews'] as Map? ?? const {}).map(
+            (k, v) => MapEntry(k as String, Review.fromJson(v as List)),
+          ),
+        )
         ..streak = m['streak'] as int? ?? 0
         ..lastDay = m['lastDay'] as String? ?? ''
         ..today.addAll((m['today'] as List? ?? const []).cast<String>());
@@ -49,6 +58,7 @@ class Profile {
     'seen': seen.toList(),
     'traced': traced.toList(),
     'weak': weak,
+    'reviews': reviews.map((k, v) => MapEntry(k, v.toJson())),
     'streak': streak,
     'lastDay': lastDay,
     'today': today.toList(),
@@ -78,6 +88,7 @@ class AppState extends ChangeNotifier {
         roman = m['roman'] as bool? ?? true;
         maleVoice = m['maleVoice'] as bool? ?? false;
         teacherMode = m['teacherMode'] as bool? ?? false;
+        onlineSpeech = m['onlineSpeech'] as bool? ?? false;
         rate = (m['rate'] as num? ?? rate).toDouble();
         final d = m['demos'] as Map?;
         if (d != null) {
@@ -122,6 +133,11 @@ class AppState extends ChangeNotifier {
   /// Shows the 'save as writing demo' button on the trace screen.
   bool teacherMode = false;
 
+  /// Lets the speaking game use the phone's online speech recogniser when
+  /// Kannada isn't available offline. Off by default: voices stay on the
+  /// phone unless a parent turns this on.
+  bool onlineSpeech = false;
+
   /// Teacher-recorded writing demos: letter → strokes of points in 0–1.
   final Map<String, List<List<Offset>>> demos = {};
 
@@ -161,6 +177,7 @@ class AppState extends ChangeNotifier {
         'roman': roman,
         'maleVoice': maleVoice,
         'teacherMode': teacherMode,
+        'onlineSpeech': onlineSpeech,
         'rate': rate,
         'demos': demos.map(
           (k, v) => MapEntry(k, [
@@ -203,6 +220,7 @@ class AppState extends ChangeNotifier {
   bool markTraced(String ch) {
     final first = traced.add(ch);
     _touch(ch);
+    _schedule(ch, right: true);
     _save();
     return first;
   }
@@ -218,18 +236,31 @@ class AppState extends ChangeNotifier {
   }
 
   /// A game answer for [ch]: mistakes raise its weak score, right answers
-  /// lower it.
+  /// lower it, and both move it in the practice schedule.
   void recordAnswer(String ch, {required bool right}) {
     final w = child.weak[ch] ?? 0;
     final next = right ? (w - 1).clamp(0, 99) : w + 1;
-    if (next == w) return;
     if (next == 0) {
       child.weak.remove(ch);
     } else {
       child.weak[ch] = next;
     }
+    _schedule(ch, right: right);
     _save();
   }
+
+  void _schedule(String ch, {required bool right}) {
+    if (!letters.any((l) => l.ch == ch)) return;
+    final today = dayNumber(_clock());
+    final r = child.reviews[ch] ?? Review(0, today);
+    // One step up per day at most, so a letter is really learnt over days.
+    if (right && r.due > today) return;
+    child.reviews[ch] = r.answer(right: right, today: today);
+  }
+
+  /// Today's practice letters, weakest and due first.
+  List<String> practiceLetters([int n = 5]) =>
+      practicePlan(child.reviews, dayNumber(_clock()), n: n);
 
   void update(void Function(AppState s) change) {
     change(this);

@@ -294,6 +294,20 @@ class _ParentsScreenState extends State<ParentsScreen> {
           ),
           _Panel(
             children: [
+              const _H('Speaking game (speech check)'),
+              const Text(
+                'In "ಹೇಳು ಆಟ" and practice with Aane, children say a word and the phone checks it with its own speech recogniser. By default this only works offline, when the phone has Kannada speech downloaded (Settings → Google → Voice → Offline speech recognition, or Google app → Settings → Voice), so no voice leaves the phone. Turn this on to let the phone use Google\'s online recogniser when Kannada is not available offline.',
+                style: TextStyle(color: K.inkSoft, fontSize: 15, height: 1.4),
+              ),
+              sw(
+                'Allow online speech check (Google)',
+                s.onlineSpeech,
+                (st, x) => st.onlineSpeech = x,
+              ),
+            ],
+          ),
+          _Panel(
+            children: [
               const _H('Record a native voice'),
               const Text(
                 'AI voices can mispronounce single Kannada letters (for example ಖ said as two syllables, or ಕ with English breath). A parent or teacher who speaks Kannada can record every letter here. Recordings replace the built-in voice on this phone, and "Send recordings" shares them so they can be built into the app for every child.',
@@ -329,7 +343,7 @@ class _ParentsScreenState extends State<ParentsScreen> {
             children: [
               _H('About'),
               Text(
-                'Akshara Aata teaches the 49 letters of the Kannada varnamala (13 swaras, 2 yogavahas, 34 vyanjanas), kagunita and numbers through listening, tracing and games. No accounts and no in-app purchases. Progress stays on this phone. Ads are child-safe: G-rated, not personalised, never during learning, tracing or a game. Human recordings from Wikimedia Commons: letters by Surabhi18 (CC BY-SA 4.0); words from Lingua Libre by AnshulBhagwat and Brusquedandelion (CC0) and Shilpa Bhat N H (CC BY-SA 4.0). Kagunita: Sarvam AI Bulbul voice. Other words: AI4Bharat Indic Parler-TTS (Apache-2.0). Stroke order in the writing animations: from animations by Gopala Krishna A, Wikimedia Commons (CC BY-SA 4.0). Pictures: Microsoft Fluent Emoji 3D, MIT license.',
+                'Akshara Aata teaches the 49 letters of the Kannada varnamala (13 swaras, 2 yogavahas, 34 vyanjanas), kagunita and numbers through listening, tracing and games. Its helpers work on the phone: a handwriting checker that recognises the letter a child writes and checks the stroke order, smart practice that brings back the letters a child finds hard (spaced repetition), and a speaking game using the speech recogniser on the phone. No accounts and no in-app purchases. Progress stays on this phone. Ads are child-safe: G-rated, not personalised, never during learning, tracing or a game. Human recordings from Wikimedia Commons: letters by Surabhi18 (CC BY-SA 4.0); words from Lingua Libre by AnshulBhagwat and Brusquedandelion (CC0) and Shilpa Bhat N H (CC BY-SA 4.0). Kagunita: Sarvam AI Bulbul voice. Other words: AI4Bharat Indic Parler-TTS (Apache-2.0). Stroke order in the writing animations: from animations by Gopala Krishna A, Wikimedia Commons (CC BY-SA 4.0). Pictures: Microsoft Fluent Emoji 3D, MIT license.',
                 style: TextStyle(color: K.inkSoft, fontSize: 16, height: 1.5),
               ),
             ],

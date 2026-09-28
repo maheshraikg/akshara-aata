@@ -142,3 +142,19 @@ Letter('ಆ', 'aa', Group.swara, '', 'ಆನೆ', 'aane', '🐘', 'Elephant'),
 Add `start: false` when the word doesn't begin with the letter (like ಳ in ಬಾಳೆಹಣ್ಣು), so the first-letter game skips it.
 
 Font: Baloo Tamma 2, SIL Open Font License (`assets/fonts/OFL.txt`).
+
+## Smart helpers (all on the phone)
+
+- **Handwriting checker** (`lib/handwriting.dart`): compares a child's strokes
+  with the centre line of every letter (`assets/writing/shapes.json`, made by
+  `tool/make_shapes.py` from the writing guides) by position and line
+  direction. It recognises which letter was written ("that looks like ಬ"),
+  rejects scribbles and checks where the child started and the stroke order.
+  Used in "Write from memory" and in practice.
+- **Smart practice** (`lib/brain.dart`): a Leitner spaced-repetition schedule
+  per letter, fed by games, tracing, writing and speaking. "Practice with
+  Aane" on the home screen picks five letters a day (due and weak letters
+  first, plus a new one); the listen and picture games lean on them too.
+- **Speaking game** (`lib/speech.dart`, "ಹೇಳು ಆಟ"): the child says a picture
+  word and the phone's speech recogniser checks it. Offline only unless a
+  parent allows the online recogniser in "For parents".

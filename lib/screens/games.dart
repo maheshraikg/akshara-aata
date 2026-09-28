@@ -11,6 +11,7 @@ import '../widgets.dart';
 import 'balloon.dart';
 import 'home.dart' show HomeBlock;
 import 'memory.dart';
+import 'practice.dart';
 
 final _rnd = math.Random();
 T pick<T>(List<T> a) => a[_rnd.nextInt(a.length)];
@@ -18,7 +19,7 @@ List<T> shuffled<T>(Iterable<T> a) => a.toList()..shuffle(_rnd);
 List<T> sampleOf<T>(List<T> pool, int n, List<T> not) =>
     shuffled(pool.where((x) => !not.contains(x))).take(n).toList();
 
-enum Game { listen, picture, memory, balloon, next, kagunita, count }
+enum Game { listen, picture, memory, balloon, next, kagunita, count, say }
 
 class GamesScreen extends StatelessWidget {
   const GamesScreen({super.key});
@@ -31,12 +32,14 @@ class GamesScreen extends StatelessWidget {
     (Game.next, 'ಮುಂದೆ ಏನು?', 'What comes next', '➡️', K.orange, K.orangeDeep),
     (Game.kagunita, 'ಕಾಗುಣಿತ ಆಟ', 'Add the sign', '📝', K.pink, K.pinkDeep),
     (Game.count, 'ಎಣಿಸು', 'Count & pick', '🧮', K.teal, K.tealDeep),
+    (Game.say, 'ಹೇಳು ಆಟ', 'Say the word', '🎤', K.turmeric, K.turmericDeep),
   ];
 
   static void open(BuildContext context, Game g, {bool swap = false}) {
     final Widget screen = switch (g) {
       Game.memory => const MemoryScreen(),
       Game.balloon => const BalloonScreen(),
+      Game.say => const SayGameScreen(),
       _ => QuizScreen(game: g),
     };
     swap ? replace(context, screen) : push(context, screen);
@@ -120,7 +123,14 @@ _Round _makeRound(Game g, AppState s) {
         byGroup(Group.vyanjana),
         letters,
       ]);
-      final ans = pick(pool);
+      // Every other round tests a letter the child needs to practise.
+      final focus = [
+        for (final c in s.practiceLetters(6))
+          if (pool.any((l) => l.ch == c)) pool.firstWhere((l) => l.ch == c),
+      ];
+      final ans = focus.isNotEmpty && _rnd.nextBool()
+          ? pick(focus)
+          : pick(pool);
       final opts = shuffled([
         ans,
         ...sampleOf(pool, 3, [ans]),
@@ -150,7 +160,11 @@ _Round _makeRound(Game g, AppState s) {
       );
     case Game.picture:
       final pairs = startWordPairs();
-      final (ansL, w) = pick(pairs);
+      final focus = s.practiceLetters(6);
+      final focused = pairs.where((p) => focus.contains(p.$1.ch)).toList();
+      final (ansL, w) = focused.isNotEmpty && _rnd.nextBool()
+          ? pick(focused)
+          : pick(pairs);
       final pool = letters.where((l) => l != ansL).toList();
       final opts = shuffled([ansL, ...sampleOf(pool, 3, const [])]);
       return _Round(
@@ -291,6 +305,7 @@ _Round _makeRound(Game g, AppState s) {
       );
     case Game.memory:
     case Game.balloon:
+    case Game.say:
       throw ArgumentError('$g has its own screen');
   }
 }

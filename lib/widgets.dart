@@ -264,6 +264,8 @@ class RoundButton extends StatelessWidget {
     '🔊': Icons.volume_up_rounded,
     '✏️': Icons.edit_rounded,
     '🧽': Icons.cleaning_services_rounded,
+    '👀': Icons.visibility_rounded,
+    '🎤': Icons.mic_rounded,
   };
 
   Widget _glyph() {

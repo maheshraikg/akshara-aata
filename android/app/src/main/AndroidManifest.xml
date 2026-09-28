@@ -4,7 +4,8 @@
          policy), so drop the permission the AdMob SDK would add. -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"
         tools:node="remove" />
-    <!-- Only used by the parents' recording studio (behind the parent gate). -->
+    <!-- Used by the parents' recording studio (behind the parent gate) and
+         the speaking game, which listens with the phone's own recogniser. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application
         android:label="ಅಕ್ಷರ ಆಟ"
@@ -55,6 +56,10 @@
         <!-- Lets flutter_tts find the phone's text-to-speech engine on Android 11+. -->
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
+        <!-- Lets speech_to_text find the phone's speech recogniser. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
 </manifest>

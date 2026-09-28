@@ -8,6 +8,7 @@ import 'games.dart';
 import 'kagunita.dart';
 import 'learn.dart';
 import 'parents.dart';
+import 'practice.dart';
 import 'song.dart';
 import 'trace.dart';
 
@@ -28,6 +29,19 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _Hero(),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 110,
+            child: HomeBlock(
+              pic: '🐘',
+              title: 'ಆನೆಯ ಜೊತೆ ಅಭ್ಯಾಸ',
+              sub: 'Practice with Aane · ${s.practiceLetters().join(' ')}',
+              color: K.plum,
+              base: K.plumDeep,
+              glyphSize: 62,
+              onTap: () => push(context, const PracticeScreen()),
+            ),
+          ),
           const SizedBox(height: 14),
           const _LetterOfTheDay(),
           const SizedBox(height: 14),

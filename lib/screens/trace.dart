@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 
 import '../audio.dart';
 import '../data.dart';
+import '../handwriting.dart';
 import '../main.dart';
 import '../state.dart';
 import '../widgets.dart';
 import '../writing_guide.dart';
 import 'learn.dart';
+import 'practice.dart';
 
 class TraceMenuScreen extends StatelessWidget {
   const TraceMenuScreen({super.key});
@@ -244,10 +246,20 @@ class _TraceScreenState extends State<TraceScreen>
       final first = state.markTraced(item.ch);
       Audio.instance.win();
       showConfetti(context);
+      // Coach the stroke order: where the letter starts.
+      final hw = await Handwriting.load();
+      final hint = hw.has(item.ch)
+          ? hw.strokeHint(item.ch, _strokes.map((s) => s.points).toList())
+          : StrokeHint.ok;
+      if (!mounted) return;
+      final start = hint == StrokeHint.ok
+          ? ''
+          : ' ${startHint(hw.startOf(item.ch)).$1}';
       setState(
         () => _msg =
             praise[math.Random().nextInt(praise.length)] +
-            (first ? ' +2 ⭐' : ''),
+            (first ? ' +2 ⭐' : '') +
+            start,
       );
       if (first) reward(context, 2);
       Audio.instance.speak(item.say, item.sayRoman);
@@ -412,6 +424,14 @@ class _TraceScreenState extends State<TraceScreen>
                     color: K.plum,
                     base: K.plumDeep,
                     onTap: () => showWritingGuide(context, item.ch),
+                  ),
+                if (WritingData.has(item.ch))
+                  PillButton(
+                    '🙈 ನೆನಪಿನಿಂದ ಬರೆ · Without looking',
+                    small: true,
+                    color: K.teal,
+                    base: K.tealDeep,
+                    onTap: () => push(context, FreeWriteScreen(item)),
                   ),
                 if (AppScope.of(context).demos.containsKey(item.ch))
                   PillButton(

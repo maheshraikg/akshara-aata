@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:akshara_aata/audio.dart';
+import 'package:akshara_aata/brain.dart';
+import 'package:akshara_aata/handwriting.dart';
 import 'package:akshara_aata/data.dart';
 import 'package:akshara_aata/main.dart';
 import 'package:akshara_aata/screens/trace.dart';
@@ -278,5 +280,115 @@ void main() {
     }
     expect(find.text('ಶಭಾಷ್!'), findsOneWidget);
     expect(state.stars, 8);
+  });
+
+  group('handwriting checker', () {
+    final json = jsonDecode(
+      File('assets/writing/shapes.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+    final hw = Handwriting.fromJson(json);
+
+    /// A letter's centre line as a child's writing: one stroke per point,
+    /// in writing order, squeezed and slanted like a child's hand.
+    List<List<Offset>> writing(String ch, {double sx = 1, double shear = 0}) {
+      final v = (json[ch] as List).cast<int>();
+      final pts = [
+        for (var i = 0; i < v.length; i += 4)
+          (
+            v[i + 3],
+            Offset(v[i] * 5.0 * sx + v[i + 1] * shear * 5, v[i + 1] * 5.0),
+          ),
+      ]..sort((a, b) => a.$1.compareTo(b.$1));
+      return [
+        for (final p in pts) [p.$2],
+      ];
+    }
+
+    test('has shapes for every letter and kagunita', () {
+      for (final l in letters) {
+        expect(hw.has(l.ch), isTrue, reason: l.ch);
+      }
+      expect(hw.has('ಕಾ') && hw.has('ಳಃ'), isTrue);
+    });
+
+    test('recognises letters, even squeezed and slanted', () {
+      var top = 0;
+      for (final l in letters) {
+        final r = hw.check(l.ch, writing(l.ch));
+        expect(r.passed, isTrue, reason: l.ch);
+        expect(r.best, l.ch);
+        if (hw.check(l.ch, writing(l.ch, sx: .85, shear: .15)).passed) top++;
+      }
+      expect(top, greaterThanOrEqualTo(45));
+    });
+
+    test('tells ಬ from ಪ and checks the kagunita sign', () {
+      expect(hw.check('ಪ', writing('ಬ')).best, 'ಬ');
+      expect(hw.check('ಕಾ', writing('ಕಾ')).passed, isTrue);
+      expect(hw.check('ಕಾ', writing('ಕೌ')).best, 'ಕೌ');
+    });
+
+    test('a scribble or a dot does not pass', () {
+      final zigzag = [
+        [for (var i = 0; i < 40; i++) Offset(i * 8.0, i.isEven ? 0 : 200)],
+      ];
+      expect(hw.check('ಅ', zigzag).passed, isFalse);
+      expect(
+        hw.check('ಅ', [
+          [const Offset(5, 5)],
+        ]).tooSmall,
+        isTrue,
+      );
+    });
+
+    test('notices writing in the wrong order', () {
+      expect(hw.strokeHint('ಕ', writing('ಕ')), StrokeHint.ok);
+      final backwards = writing('ಕ').reversed.toList();
+      expect(hw.strokeHint('ಕ', backwards), isNot(StrokeHint.ok));
+      expect(startHint(const Offset(.2, .2)).$2, 'Start at the top left');
+    });
+  });
+
+  group('smart practice', () {
+    test('new letters come in order, mistakes come back first', () {
+      expect(practicePlan({}, 100, n: 3), ['ಅ', 'ಆ', 'ಇ']);
+      final r = {
+        'ಅ': const Review(3, 150),
+        'ಆ': const Review(0, 100),
+        'ಇ': const Review(2, 99),
+      };
+      expect(practicePlan(r, 100, n: 3), ['ಆ', 'ಇ', 'ಈ']);
+    });
+
+    test('right answers space reviews out, a mistake resets', () {
+      var r = const Review(0, 10);
+      r = r.answer(right: true, today: 10);
+      expect((r.box, r.due), (1, 11));
+      r = r.answer(right: true, today: 11).answer(right: true, today: 13);
+      expect((r.box, r.due), (3, 17));
+      r = r.answer(right: false, today: 17);
+      expect((r.box, r.due), (0, 17));
+    });
+
+    test('game answers schedule letters for this child', () async {
+      final s = await freshState();
+      s.recordAnswer('ಕ', right: false);
+      expect(s.practiceLetters(2).first, 'ಕ');
+      expect(s.child.reviews['ಕ']!.box, 0);
+    });
+  });
+
+  group('speech check', () {
+    test('matches the word, in a sentence or romanised', () {
+      expect(speechMatch('ಆನೆ', 'aane', ['ಆನೆ']), 1);
+      expect(speechMatch('ಆನೆ', 'aane', ['ಇದು ಆನೆ']), 1);
+      expect(speechMatch('ಬಸ್', 'bas', ['bus']), greaterThanOrEqualTo(.6));
+      expect(
+        speechMatch('ಕಮಲ', 'kamala', ['ಕಮಲಾ']),
+        greaterThanOrEqualTo(speechPass),
+      );
+      expect(speechMatch('ಕಮಲ', 'kamala', ['ಮರ']), lessThan(speechPass));
+      expect(speechMatch('ಕಮಲ', 'kamala', []), 0);
+    });
   });
 }
