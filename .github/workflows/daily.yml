@@ -1,0 +1,50 @@
+name: Akshara Aata daily AI pack
+
+# Every day: Gemini writes new short stories for the coming week and Sarvam
+# reads them (GEMINI_API_KEY / GEMINI_API_KEYP and SARVAM_API_KEY secrets).
+# The pack is published as a release file the app downloads when online.
+# The keys never leave GitHub; the app never calls an AI service.
+on:
+  schedule:
+    - cron: '17 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: akshara-aata-daily
+  cancel-in-progress: false
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          pip install numpy soundfile
+          sudo apt-get install -y -qq ffmpeg >/dev/null
+      - name: Write and speak
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || secrets.GEMINI_API_KEYP }}
+          SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
+        run: python3 tool/gemini_daily.py out
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test -s out/pack.json || { echo "::warning::No pack made"; exit 0; }
+          python3 -c "import json,sys; sys.exit(0 if json.load(open('out/pack.json'))['stories'] else 1)" || { echo "::warning::No stories made"; exit 0; }
+          (cd out && zip -q -r ../daily.zip .)
+          gh release view akshara-aata-online -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create akshara-aata-online -R "$GITHUB_REPOSITORY" --prerelease \
+              --target main \
+              --title "Akshara Aata online pack" --notes "Daily AI stories the app downloads when online."
+          gh release upload akshara-aata-online daily.zip --clobber -R "$GITHUB_REPOSITORY"

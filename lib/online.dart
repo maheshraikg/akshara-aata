@@ -37,7 +37,7 @@ class Online {
   static final Online instance = Online._();
 
   static const url =
-      'https://github.com/maheshraikg/Pdf_Tools/releases/download/akshara-aata-online/daily.zip';
+      'https://github.com/maheshraikg/akshara-aata/releases/download/akshara-aata-online/daily.zip';
 
   /// Today's story, online if there is one, otherwise built in.
   final ValueNotifier<Story> today = ValueNotifier(

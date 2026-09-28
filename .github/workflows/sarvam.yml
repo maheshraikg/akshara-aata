@@ -1,0 +1,57 @@
+name: Akshara Aata Sarvam kagunita
+
+# Speaks kagunita with Sarvam AI Bulbul (needs the SARVAM_API_KEY secret)
+# and keeps takes the IndicConformer Kannada recogniser hears exactly right.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  speak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - name: Settings
+        id: cfg
+        run: grep -v '^#' tool/sarvam.cfg >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Cache the recogniser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-indic-conformer-600m
+      - name: Install
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1 torchaudio==2.5.1
+          printf 'torch==2.5.1\ntorchaudio==2.5.1\n' > /tmp/pins.txt
+          pip install -c /tmp/pins.txt 'transformers<4.50' soundfile onnx onnxruntime
+      - name: Speak and check
+        env:
+          SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SHARD: ${{ matrix.shard }}
+          SHARDS: 4
+          ONLY: ${{ steps.cfg.outputs.ONLY }}
+          SPEAKER: ${{ steps.cfg.outputs.SPEAKER }}
+          PASS: ${{ steps.cfg.outputs.PASS }}
+        run: python3 tool/sarvam_kagunita.py out
+      - name: Upload
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out
+          tar czf ../sarvam2-${{ matrix.shard }}.tgz out
+          gh release upload akshara-aata-voice-keep ../sarvam2-${{ matrix.shard }}.tgz --clobber -R "$GITHUB_REPOSITORY"

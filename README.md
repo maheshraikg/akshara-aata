@@ -2,6 +2,8 @@
 
 A Flutter app that teaches young children (ages 3–8) the Kannada varnamala. It is built for Google Play's Families program: no accounts, and child-safe AdMob ads only on menu screens.
 
+**Download (test build):** https://github.com/maheshraikg/akshara-aata/releases/download/akshara-aata-keep/akshara-aata.apk
+
 ## What's inside
 
 | Area | Details |
@@ -45,7 +47,7 @@ Back up the `.jks` file and its passwords. If you lose them you can't ship updat
 
 ### 2a. Build on GitHub (no Android Studio needed)
 
-The workflow `.github/workflows/akshara-aata-android.yml` builds the app every time `akshara_aata/` changes, or when you run it from the Actions tab. To sign the build for Play, add these repository secrets (Settings → Secrets and variables → Actions):
+The workflow `.github/workflows/android.yml` builds the app on every push to `main` (and checks pull requests), or when you run it from the Actions tab. Each build from `main` is published on the `akshara-aata-keep` release: `akshara-aata.apk` to install on a phone, `akshara-aata.aab` for Play Console. To sign the build for Play, add these repository secrets (Settings → Secrets and variables → Actions):
 
 | Secret | Value |
 | --- | --- |

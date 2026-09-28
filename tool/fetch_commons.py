@@ -16,7 +16,7 @@ import urllib.request
 
 API = 'https://commons.wikimedia.org/w/api.php'
 # Wikimedia throttles requests without a contact URL in the User-Agent.
-UA = {'User-Agent': 'AksharaAata/1.0 (https://github.com/maheshraikg/Pdf_Tools; '
+UA = {'User-Agent': 'AksharaAata/1.0 (https://github.com/maheshraikg/akshara-aata; '
                     'Kannada learning app build script) python-urllib'}
 
 

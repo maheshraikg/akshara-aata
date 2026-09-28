@@ -1,0 +1,51 @@
+name: Akshara Aata Commons recordings
+
+# Downloads native-speaker Kannada pronunciation recordings (with licence
+# metadata) from Wikimedia Commons and attaches them to the
+# akshara-aata-voice-keep pre-release. The dev environment can't reach
+# Wikimedia directly.
+on:
+  workflow_dispatch:
+    inputs:
+      categories:
+        description: 'Commons categories, separated by |'
+        default: 'Pronunciation of Kannada alphabet|Lingua Libre pronunciation-kan'
+      only_app_words:
+        description: 'Only fetch words the app uses (1 = yes)'
+        default: '1'
+      asset:
+        description: 'Release asset name'
+        default: 'commons-kannada-writing.tgz'
+
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download
+        env:
+          CATS: ${{ inputs.categories || 'Animations of Kannada letters' }}
+          ONLY: ${{ inputs.only_app_words || '0' }}
+          ASSET: ${{ inputs.asset || 'commons-kannada-writing.tgz' }}
+        run: |
+          IFS='|' read -ra c <<< "$CATS"
+          if [ "$ONLY" = 1 ]; then export WANT=assets/audio/recording-list.csv; fi
+          python3 tool/fetch_commons.py "${c[@]}"
+          tar czf "../$ASSET" commons
+      - name: Upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET: ${{ inputs.asset || 'commons-kannada-writing.tgz' }}
+        run: |
+          gh release view akshara-aata-voice-keep -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create akshara-aata-voice-keep -R "$GITHUB_REPOSITORY" --prerelease --latest=false \
+              --title "Akshara Aata voice samples" --notes "Generated Kannada voice files." || true
+          gh release upload akshara-aata-voice-keep "../$ASSET" --clobber -R "$GITHUB_REPOSITORY"

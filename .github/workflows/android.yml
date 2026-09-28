@@ -1,0 +1,172 @@
+name: Akshara Aata (Flutter) Android build
+
+# Builds the app into a Play Store bundle (.aab) and an installable APK.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: akshara-aata-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write  # publish the test APK as a pre-release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      # Play Console only accepts bundles signed with your upload key. Add these
+      # repository secrets to sign; without them the build uses debug keys
+      # (fine for testing on a phone, rejected by Play).
+      - name: Set up upload key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.AKSHARA_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.AKSHARA_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.AKSHARA_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.AKSHARA_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::AKSHARA_KEYSTORE_BASE64 is not set, so this build is debug-signed and cannot be uploaded to Play."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          # Alias and key password are optional: the key made for this app
+          # uses the alias "upload" and the store password for the key.
+          {
+            echo "storeFile=upload-keystore.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=${KEY_ALIAS:-upload}"
+            echo "keyPassword=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+          } > android/key.properties
+
+      # AdMob IDs from repository secrets. Without them the app shows no ads
+      # (right for the first Play release: AdMob approves apps once they are
+      # live).
+      - name: Check AdMob IDs
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+        run: |
+          if [ -z "$ADMOB_APP_ID" ] || [ -z "$ADMOB_BANNER_ID" ] || [ -z "$ADMOB_INTERSTITIAL_ID" ]; then
+            echo "::warning::ADMOB_APP_ID / ADMOB_BANNER_ID / ADMOB_INTERSTITIAL_ID not all set, so this build shows no ads."
+          fi
+
+      - name: Build app bundle (Play Store)
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+        run: >
+          flutter build appbundle --release
+          --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }}
+          --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }}
+
+      - name: Build APK (install on a phone)
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+        run: >
+          flutter build apk --release
+          --dart-define=ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }}
+          --dart-define=ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: akshara-aata-release
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+  # Opens the APK on an Android 10 (API 29) emulator and fails on a launch crash.
+  smoke-test:
+    needs: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: akshara-aata-release
+          path: artifact
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          target: default
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          working-directory: .
+          script: ./tool/smoke_test.sh $(find artifact -name app-release.apk | head -1)
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akshara-aata-smoke-test
+          path: smoke/
+
+  # Updates the phone download link only after the launch test passed.
+  publish:
+    needs: smoke-test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: akshara-aata-release
+          path: artifact
+
+      # A fixed pre-release gives testers a direct phone download link:
+      # https://github.com/<owner>/<repo>/releases/download/akshara-aata-keep/akshara-aata.apk
+      # The .aab next to it is the file to upload to Play Console.
+      - name: Prepare downloads
+        run: |
+          cp "$(find artifact -name app-release.apk | head -1)" akshara-aata.apk
+          cp "$(find artifact -name app-release.aab | head -1)" akshara-aata.aab
+
+      # Only swaps the asset: editing the release itself is refused to
+      # GITHUB_TOKEN here ("Resource not accessible by integration").
+      - name: Publish test APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view akshara-aata-keep -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create akshara-aata-keep -R "$GITHUB_REPOSITORY" --prerelease --latest=false \
+              --title "Akshara Aata test build" --notes "Latest build: install akshara-aata.apk on a phone; upload akshara-aata.aab to Play Console."
+          gh release upload akshara-aata-keep akshara-aata.apk akshara-aata.aab --clobber -R "$GITHUB_REPOSITORY"
