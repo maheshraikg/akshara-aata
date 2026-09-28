@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#C8323C</color>
+    <!-- Same red as the app icon, so launch → splash → app has no flash. -->
+    <color name="splash_red">#C8323C</color>
 </resources>

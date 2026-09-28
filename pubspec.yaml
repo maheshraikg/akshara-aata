@@ -35,6 +35,7 @@ flutter:
     - assets/pics/
     - assets/writing/
     - assets/music/
+    - assets/splash/
   fonts:
     - family: BalooTamma2
       fonts:

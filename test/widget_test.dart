@@ -235,6 +235,8 @@ void main() {
     final state = await freshState();
     state.update((s) => s.sfx = false);
     await tester.pumpWidget(AksharaAata(state: state));
+    // Past the opening splash to the home screen.
+    await tester.pumpAndSettle();
     expect(find.text('ಅಕ್ಷರ ಆಟ'), findsOneWidget);
 
     await tester.ensureVisible(find.text('ಸ್ವರಗಳು'));
@@ -262,6 +264,8 @@ void main() {
     final state = await freshState();
     state.update((s) => s.sfx = false);
     await tester.pumpWidget(AksharaAata(state: state));
+    // Past the opening splash to the home screen.
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('ಆಟಗಳು'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ಆಟಗಳು'));

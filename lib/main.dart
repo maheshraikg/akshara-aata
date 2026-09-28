@@ -8,7 +8,7 @@ import 'ads.dart';
 import 'audio.dart';
 import 'online.dart';
 import 'recordings.dart';
-import 'screens/home.dart';
+import 'screens/splash.dart';
 import 'state.dart';
 import 'widgets.dart';
 
@@ -59,7 +59,7 @@ class AksharaAata extends StatelessWidget {
             fontFamily: 'BalooTamma2',
           ),
         ),
-        home: const HomeScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
