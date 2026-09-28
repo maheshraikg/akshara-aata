@@ -4,6 +4,8 @@
          policy), so drop the permission the AdMob SDK would add. -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"
         tools:node="remove" />
+    <!-- Ads, and the daily story pack the app downloads when online. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Used by the parents' recording studio (behind the parent gate) and
          the speaking game, which listens with the phone's own recogniser. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />

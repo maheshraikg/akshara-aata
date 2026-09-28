@@ -9,6 +9,8 @@ import 'kagunita.dart';
 import 'learn.dart';
 import 'parents.dart';
 import 'practice.dart';
+import 'story.dart';
+import '../online.dart';
 import 'song.dart';
 import 'trace.dart';
 
@@ -44,6 +46,28 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           const _LetterOfTheDay(),
+          const SizedBox(height: 14),
+          ValueListenableBuilder<Story>(
+            valueListenable: Online.instance.today,
+            builder: (context, story, _) => SizedBox(
+              height: 110,
+              child: HomeBlock(
+                glyph: story.letter,
+                pic: story.online ? '✨' : '📖',
+                title: 'ಇಂದಿನ ಕಥೆ',
+                sub: story.online
+                    ? "Today's story · new every day"
+                    : "Today's story",
+                color: K.teal,
+                base: K.tealDeep,
+                glyphSize: 62,
+                onTap: () {
+                  Online.instance.refresh();
+                  push(context, StoryScreen(story));
+                },
+              ),
+            ),
+          ),
           const SizedBox(height: 14),
           const _StreakCard(),
           const SizedBox(height: 14),

@@ -6,6 +6,7 @@ import 'package:akshara_aata/brain.dart';
 import 'package:akshara_aata/handwriting.dart';
 import 'package:akshara_aata/data.dart';
 import 'package:akshara_aata/main.dart';
+import 'package:akshara_aata/online.dart';
 import 'package:akshara_aata/screens/trace.dart';
 import 'package:akshara_aata/writing_guide.dart';
 import 'package:akshara_aata/state.dart';
@@ -389,6 +390,28 @@ void main() {
       );
       expect(speechMatch('ಕಮಲ', 'kamala', ['ಮರ']), lessThan(speechPass));
       expect(speechMatch('ಕಮಲ', 'kamala', []), 0);
+    });
+  });
+
+  group('online story pack', () {
+    test("picks today's story from the pack, else the built-in one", () {
+      final pack = {
+        'stories': {
+          '2026-09-28': {
+            'letter': 'ಕ',
+            'title': ['ಕಪ್ಪೆಯ ಕಥೆ', 'The frog'],
+            'sentences': [
+              ['ಕಪ್ಪೆ ಕುಣಿಯಿತು.', 'kappe kuNiyitu.', 'The frog danced.'],
+            ],
+          },
+        },
+      };
+      final s = storyFor(pack, DateTime(2026, 9, 28))!;
+      expect((s.letter, s.online, s.sentences.length), ('ಕ', true, 1));
+      expect(storyFor(pack, DateTime(2026, 9, 29)), isNull);
+      final off = offlineStory(DateTime(2026, 9, 29));
+      expect(off.online, isFalse);
+      expect(off.sentences, isNotEmpty);
     });
   });
 }
