@@ -45,7 +45,7 @@ MADE FOR KIDS AND PARENTS
 **Contains ads:** No for the first release (built without AdMob IDs); change to Yes in the update that adds the AdMob IDs.
 **Category:** Education
 **Tags:** Kannada, alphabet, kids, learning, varnamala
-**Contact email:** (your email)
+**Contact email:** maheshraikg@gmail.com
 
 **Data safety form (Play Console), matching the privacy policy:**
 - Data collected by the developer: none. Progress stays on the phone.

@@ -2,7 +2,7 @@
 
 _Last updated: 28 September 2026_
 
-Akshara Aata is a Kannada alphabet learning app for children.
+Akshara Aata is a Kannada alphabet learning app for children, published by DIGISEVE.
 
 **We do not collect personal information ourselves.** The app has no accounts, sign-in or registration, and does not access the camera, contacts or location. The microphone is used in two places: the recording studio (behind the parent check), where a parent can record Kannada letters that stay on the phone unless the parent chooses to share them; and the speaking game, where the child says a word and the phone's own speech recogniser checks it. By default this works only with the phone's offline Kannada speech, so no voice leaves the phone. Only if a parent turns on "Allow online speech check (Google)" may the phone send the spoken word to Google's speech service to recognise it (see https://policies.google.com/privacy). The app does not record or keep what the child says.
 
@@ -20,4 +20,4 @@ To show and measure ads and to prevent fraud, AdMob may collect limited technica
 
 **Children:** the app is designed for children and follows Google Play's Families Policy. It uses only Families self-certified ad SDKs. We do not knowingly collect personal information from children.
 
-**Contact:** questions about this policy can be sent to (your email).
+**Contact:** questions about this policy can be sent to maheshraikg@gmail.com.

@@ -346,6 +346,24 @@ class _ParentsScreenState extends State<ParentsScreen> {
                 'Akshara Aata teaches the 49 letters of the Kannada varnamala (13 swaras, 2 yogavahas, 34 vyanjanas), kagunita and numbers through listening, tracing and games. Its helpers work on the phone: a handwriting checker that recognises the letter a child writes and checks the stroke order, smart practice that brings back the letters a child finds hard (spaced repetition), and a speaking game using the speech recogniser on the phone. When online, the app downloads a new short story every day (written with Google Gemini and read by Sarvam AI, checked on our side); it sends nothing about your child. Offline it uses its built-in stories. No accounts and no in-app purchases. Progress stays on this phone. Ads are child-safe: G-rated, not personalised, never during learning, tracing or a game. Human recordings from Wikimedia Commons: letters by Surabhi18 (CC BY-SA 4.0); words from Lingua Libre by AnshulBhagwat and Brusquedandelion (CC0) and Shilpa Bhat N H (CC BY-SA 4.0). Kagunita: Sarvam AI Bulbul voice. Other words: AI4Bharat Indic Parler-TTS (Apache-2.0). Stroke order in the writing animations: from animations by Gopala Krishna A, Wikimedia Commons (CC BY-SA 4.0). Pictures: Microsoft Fluent Emoji 3D, MIT license.',
                 style: TextStyle(color: K.inkSoft, fontSize: 16, height: 1.5),
               ),
+              SizedBox(height: 10),
+              Text(
+                'Privacy policy',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              SelectableText(
+                'https://github.com/maheshraikg/akshara-aata/blob/main/store/privacy-policy.md',
+                style: TextStyle(color: K.blueDeep, fontSize: 15),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Contact',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              SelectableText(
+                'DIGISEVE · maheshraikg@gmail.com',
+                style: TextStyle(color: K.blueDeep, fontSize: 15),
+              ),
             ],
           ),
         ],
