@@ -2,6 +2,8 @@
 /// numerals and kagunita vowel signs.
 library;
 
+import 'lines.dart';
+
 enum Group { swara, yogavaha, vyanjana }
 
 class Letter {
@@ -529,6 +531,9 @@ List<(String, String)> spokenTexts() {
     for (final s in signs) {
       out.putIfAbsent(l.ch + s.sign, () => rootOf(l) + s.tr);
     }
+  }
+  for (final (kn, tr, _) in letterLines.values) {
+    out[kn] = tr;
   }
   for (final (kn, tr) in spokenPraise) {
     out[kn] = tr;

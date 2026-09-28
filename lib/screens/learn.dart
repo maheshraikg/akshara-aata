@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../audio.dart';
 import '../data.dart';
+import '../lines.dart';
 import '../main.dart';
 import '../state.dart';
 import '../widgets.dart';
@@ -375,6 +376,50 @@ class _LetterCardScreenState extends State<LetterCardScreen>
                   ],
                 ),
               ],
+              if (letterLines[item.ch] case (final kn, final tr, final en))
+                Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Toy(
+                    onTap: () => Audio.instance.speak(kn, tr),
+                    color: K.pastel(color, .12),
+                    base: K.pastel(deep, .35),
+                    depth: 4,
+                    radius: 20,
+                    semanticLabel: 'Listen: $en',
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.volume_up_rounded, color: deep, size: 26),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                kn,
+                                style: const TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.3,
+                                ),
+                              ),
+                              if (s.roman)
+                                Text(
+                                  en,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: K.inkSoft,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               const SizedBox(height: 22),
               Wrap(
                 spacing: 12,
