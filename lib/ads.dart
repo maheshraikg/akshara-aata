@@ -11,11 +11,19 @@ class Ads {
   Ads._();
 
   // Google's public test IDs. Real IDs come from --dart-define at build time
-  // (see README); a build without them shows "Test Ad" banners.
+  // (see README). A build without them shows no ads at all, so the first
+  // Play release can go out before AdMob approves the app (AdMob needs the
+  // app to be live first); --dart-define=TEST_ADS=true shows test ads.
   static const _testBanner = 'ca-app-pub-3940256099942544/6300978111';
   static const _testInterstitial = 'ca-app-pub-3940256099942544/1033173712';
   static const _banner = String.fromEnvironment('ADMOB_BANNER_ID');
   static const _interstitial = String.fromEnvironment('ADMOB_INTERSTITIAL_ID');
+
+  static const _testAds = bool.fromEnvironment('TEST_ADS');
+
+  /// Ads are on when real AdMob IDs are built in (or test ads are asked for).
+  static bool get enabled =>
+      _testAds || (_banner.isNotEmpty && _interstitial.isNotEmpty);
 
   static String get bannerId => _banner.isEmpty ? _testBanner : _banner;
   static String get interstitialId =>
@@ -31,7 +39,7 @@ class Ads {
   static const request = AdRequest(nonPersonalizedAds: true);
 
   static Future<void> init() async {
-    if (kIsWeb || !Platform.isAndroid) return;
+    if (kIsWeb || !Platform.isAndroid || !enabled) return;
     try {
       await MobileAds.instance.updateRequestConfiguration(
         RequestConfiguration(

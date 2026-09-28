@@ -140,7 +140,7 @@ Story? storyFor(Map<String, dynamic> pack, DateTime now) {
 
 /// The built-in story for a day: the letter's line and its words.
 Story offlineStory(DateTime now) {
-  final l = letters[now.difference(DateTime(2000)).inDays % letters.length];
+  final l = letterOfTheDay(now);
   final line = letterLines[l.ch];
   return Story(
     letter: l.ch,

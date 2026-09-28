@@ -35,9 +35,9 @@ class HomeScreen extends StatelessWidget {
           SizedBox(
             height: 110,
             child: HomeBlock(
-              pic: '🐘',
-              title: 'ಆನೆಯ ಜೊತೆ ಅಭ್ಯಾಸ',
-              sub: 'Practice with Aane · ${s.practiceLetters().join(' ')}',
+              pic: '🌟',
+              title: 'ಇಂದಿನ ಅಭ್ಯಾಸ',
+              sub: "Today's practice · ${s.practiceLetters().join(' ')}",
               color: K.plum,
               base: K.plumDeep,
               glyphSize: 62,
@@ -52,9 +52,8 @@ class HomeScreen extends StatelessWidget {
             builder: (context, story, _) => SizedBox(
               height: 110,
               child: HomeBlock(
-                glyph: story.letter,
                 pic: story.online ? '✨' : '📖',
-                title: 'ಇಂದಿನ ಕಥೆ',
+                title: 'ಇಂದಿನ ಕಥೆ · ${story.letter}',
                 sub: story.online
                     ? "Today's story · new every day"
                     : "Today's story",
@@ -271,7 +270,11 @@ class HomeBlock extends StatelessWidget {
   final double glyphSize;
 
   @override
-  Widget build(BuildContext context) => Toy(
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, c) => _block(context, c.maxWidth > c.maxHeight * 2),
+  );
+
+  Widget _block(BuildContext context, bool wide) => Toy(
     onTap: onTap,
     color: color,
     base: base,
@@ -335,7 +338,8 @@ class HomeBlock extends StatelessWidget {
             ),
           Positioned(
             left: 16,
-            right: 12,
+            // Wide blocks keep the text clear of the picture on the right.
+            right: wide && pic != null ? glyphSize + 30 : 12,
             bottom: 12,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -619,10 +623,8 @@ class _LetterOfTheDay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final day = now.difference(DateTime(now.year)).inDays;
     final cards = [...vowelCards, ...consonantCards];
-    final i = day % cards.length;
+    final i = letters.indexOf(letterOfTheDay(DateTime.now()));
     final item = cards[i];
     final (c, deep) = K.tintFor(item.ch);
     return Toy(

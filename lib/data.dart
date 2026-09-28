@@ -478,6 +478,11 @@ List<(Letter, Word)> startWordPairs() => [
       if (w.word.startsWith(l.ch) && (l.start || w.word != l.word)) (l, w),
 ];
 
+/// The letter of the day (the home card and the day's story share it; the
+/// daily story pack in tool/gemini_daily.py uses the same rule).
+Letter letterOfTheDay(DateTime now) =>
+    letters[now.difference(DateTime(now.year)).inDays % letters.length];
+
 List<Letter> byGroup(Group g) => letters.where((l) => l.group == g).toList();
 
 /// Consonant root without the inherent "a" (ka → k).

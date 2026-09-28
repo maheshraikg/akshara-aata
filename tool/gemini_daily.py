@@ -52,7 +52,8 @@ def main():
     days = []
     for d in range(DAYS):
         day = today + datetime.timedelta(days=d)
-        ch, w, wt, en = all_letters[day.toordinal() % len(all_letters)]
+        # Same letter as the app's letter of the day (letterOfTheDay in lib/data.dart).
+        ch, w, wt, en = all_letters[(day - datetime.date(day.year, 1, 1)).days % len(all_letters)]
         days.append((day.isoformat(), ch, w, wt, en))
     items = '\n'.join(f'- letter {ch}: picture word {w} ({wt}, {en})' for _, ch, w, wt, en in days)
     stories = {}

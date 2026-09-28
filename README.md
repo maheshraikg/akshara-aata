@@ -51,8 +51,8 @@ The workflow `.github/workflows/akshara-aata-android.yml` builds the app every t
 | --- | --- |
 | `AKSHARA_KEYSTORE_BASE64` | output of `base64 -w0 upload-keystore.jks` |
 | `AKSHARA_KEYSTORE_PASSWORD` | keystore password |
-| `AKSHARA_KEY_ALIAS` | `upload` |
-| `AKSHARA_KEY_PASSWORD` | key password |
+| `AKSHARA_KEY_ALIAS` | optional, default `upload` |
+| `AKSHARA_KEY_PASSWORD` | optional, default: the keystore password |
 
 Download `app-release.aab` from the run's **akshara-aata-release** artifact.
 
@@ -81,7 +81,7 @@ Then run `flutter build appbundle --release`. Both files are git-ignored.
 | `ADMOB_BANNER_ID` | banner unit ID, `ca-app-pub-XXXX/ZZZZ` |
 | `ADMOB_INTERSTITIAL_ID` | interstitial unit ID |
 
-Without them the build uses Google's test IDs and shows "Test Ad" banners. That is the right setup while you test. Never tap your own real ads, because AdMob can suspend the account for it.
+Without them the build shows no ads (add `--dart-define=TEST_ADS=true` to see Google's test ads). Publish the first version without ads, then create the app in AdMob, add the IDs and release an update. Never tap your own real ads, because AdMob can suspend the account for it.
 
 Building on your computer instead: `ADMOB_APP_ID=ca-app-pub-...~... flutter build appbundle --release --dart-define=ADMOB_BANNER_ID=... --dart-define=ADMOB_INTERSTITIAL_ID=...`
 

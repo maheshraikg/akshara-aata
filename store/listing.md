@@ -40,10 +40,9 @@ MADE FOR KIDS AND PARENTS
 • Progress tracking for parents
 • Settings are behind a parent check
 • No in-app purchases, no accounts
-• Child-safe ads only on menu screens, never while your child is learning or playing
 • Everything works offline; the handwriting checker and smart practice run on the phone
 
-**Contains ads:** Yes
+**Contains ads:** No for the first release (built without AdMob IDs); change to Yes in the update that adds the AdMob IDs.
 **Category:** Education
 **Tags:** Kannada, alphabet, kids, learning, varnamala
 **Contact email:** (your email)
